@@ -1,0 +1,41 @@
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+.submit {
+  height: 48px;
+  margin-top: 8px;
+  font-size: 1rem;
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+}
+
+.switch {
+  margin: 24px 0 0;
+  text-align: center;
+  color: var(--app-muted);
+}
+
+.demo-hint {
+  margin-top: 28px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px dashed var(--mat-sys-outline-variant);
+  color: var(--app-muted);
+  font-size: 0.85rem;
+}

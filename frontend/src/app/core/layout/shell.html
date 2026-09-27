@@ -1,0 +1,50 @@
+<a class="skip-link" href="#main">Saltar al contenido</a>
+
+<header class="topbar">
+  <div class="topbar__inner">
+    <a class="brand" routerLink="/partidos" aria-label="Polla Mundialista, inicio">
+      <img src="favicon.svg" alt="" width="32" height="32" />
+      <span>Polla<strong>Mundialista</strong></span>
+    </a>
+
+    <nav class="nav" aria-label="Principal">
+      @for (item of navItems(); track item.path) {
+        <a class="nav__link" [routerLink]="item.path" routerLinkActive="nav__link--active" ariaCurrentWhenActive="page">
+          <app-icon [name]="item.icon" />
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+
+    <button mat-button class="user" [matMenuTriggerFor]="userMenu" aria-label="Menú de usuario">
+      <span class="avatar" aria-hidden="true">{{ initials() }}</span>
+      <span class="user__name">{{ auth.user()?.displayName }}</span>
+    </button>
+    <mat-menu #userMenu="matMenu" xPosition="before">
+      <div class="menu-header">
+        <strong>{{ auth.user()?.displayName }}</strong>
+        <small>{{ auth.user()?.email }}</small>
+        @if (auth.isAdmin()) {
+          <small class="role">Administrador</small>
+        }
+      </div>
+      <button mat-menu-item (click)="logout()">
+        <app-icon name="logout" />
+        <span>Cerrar sesión</span>
+      </button>
+    </mat-menu>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+  <router-outlet />
+</main>
+
+<nav class="bottom-nav" aria-label="Principal (móvil)">
+  @for (item of navItems(); track item.path) {
+    <a [routerLink]="item.path" routerLinkActive="bottom-nav__link--active" ariaCurrentWhenActive="page" class="bottom-nav__link">
+      <app-icon [name]="item.icon" />
+      <span>{{ item.label }}</span>
+    </a>
+  }
+</nav>

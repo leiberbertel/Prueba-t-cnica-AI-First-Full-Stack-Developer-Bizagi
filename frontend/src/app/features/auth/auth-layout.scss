@@ -1,0 +1,114 @@
+:host {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+// Ilustración generada con IA (ver docs/imagenes.md). Si no existe, queda la cancha dibujada en CSS.
+.hero {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  padding: 48px;
+  overflow: hidden;
+  color: #fff;
+  background:
+    linear-gradient(180deg, rgb(6 42 32 / 0.15) 0%, rgb(6 42 32 / 0.92) 85%),
+    var(--auth-hero-image, none) center / cover no-repeat,
+    radial-gradient(circle at 50% 50%, transparent 0 17%, rgb(255 255 255 / 0.18) 17% 17.6%, transparent 17.6%),
+    linear-gradient(90deg, transparent 49.7%, rgb(255 255 255 / 0.18) 49.7% 50.3%, transparent 50.3%),
+    repeating-linear-gradient(90deg, #0f5a40 0 60px, #0d5139 60px 120px);
+}
+
+.hero__content {
+  position: relative;
+  max-width: 440px;
+
+  img {
+    border-radius: 14px;
+    box-shadow: 0 0 0 2px rgb(255 255 255 / 0.4);
+  }
+}
+
+.hero__kicker {
+  margin: 24px 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #f2c94c;
+}
+
+.hero__title {
+  margin: 0;
+  font-family: Outfit, sans-serif;
+  font-weight: 800;
+  font-size: clamp(2.2rem, 4vw, 3.4rem);
+  line-height: 1.05;
+
+  span {
+    color: #f2c94c;
+  }
+}
+
+.hero__rules {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 28px 0 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.12);
+    backdrop-filter: blur(6px);
+    font-size: 0.9rem;
+  }
+}
+
+.panel {
+  display: grid;
+  place-items: center;
+  padding: 32px 16px;
+}
+
+.panel__inner {
+  width: 100%;
+  max-width: 400px;
+
+  h1 {
+    font-size: 2rem;
+  }
+}
+
+.panel__subtitle {
+  margin: 6px 0 28px;
+  color: var(--app-muted);
+}
+
+@media (max-width: 860px) {
+  :host {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .hero {
+    min-height: 200px;
+    padding: 24px 16px;
+  }
+
+  .hero__content img,
+  .hero__rules {
+    display: none;
+  }
+
+  .hero__kicker {
+    margin-top: 0;
+  }
+
+  .hero__title {
+    font-size: 1.9rem;
+  }
+}
