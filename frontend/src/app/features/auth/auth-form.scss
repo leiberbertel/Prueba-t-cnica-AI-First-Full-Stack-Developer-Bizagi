@@ -25,6 +25,17 @@ mat-form-field {
   color: var(--mat-sys-on-error-container);
 }
 
+.info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--app-success-container);
+  color: var(--app-success);
+}
+
 .switch {
   margin: 24px 0 0;
   text-align: center;

@@ -9,10 +9,24 @@ export interface FieldError {
 
 const FALLBACK_MESSAGE = 'Algo salió mal. Intenta de nuevo.';
 
-/** Extrae el Problem Detail (RFC 9457) que envía el backend. */
+/**
+ * Extrae el Problem Detail (RFC 9457) que envía el backend. En operaciones sin cuerpo de respuesta (p. ej.
+ * `DELETE /me`) el cliente generado pide la respuesta como texto, así que el error llega como JSON en un string.
+ */
 export function problemOf(error: unknown): ProblemDetail | null {
-  if (error instanceof HttpErrorResponse && error.error && typeof error.error === 'object') {
+  if (!(error instanceof HttpErrorResponse) || !error.error) {
+    return null;
+  }
+  if (typeof error.error === 'object') {
     return error.error as ProblemDetail;
+  }
+  if (typeof error.error === 'string') {
+    try {
+      const parsed: unknown = JSON.parse(error.error);
+      return parsed && typeof parsed === 'object' ? (parsed as ProblemDetail) : null;
+    } catch {
+      return null;
+    }
   }
   return null;
 }

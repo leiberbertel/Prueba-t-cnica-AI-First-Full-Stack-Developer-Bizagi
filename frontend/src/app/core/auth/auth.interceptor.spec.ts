@@ -71,6 +71,16 @@ describe('authInterceptor', () => {
     await expect(second).resolves.toEqual(['ok']);
   });
 
+  it('treats a 204 from refresh (no cookie) as "no session" without an HTTP error', async () => {
+    const auth204 = TestBed.inject(AuthStore);
+    const restore = auth204.restoreSession();
+
+    backend.expectOne('/api/v1/auth/refresh').flush(null, { status: 204, statusText: 'No Content' });
+    await restore;
+
+    expect(auth204.isAuthenticated()).toBe(false);
+  });
+
   it('ends the session and goes to login when refresh fails', async () => {
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     const request = firstValueFrom(http.get('/api/v1/matches'));

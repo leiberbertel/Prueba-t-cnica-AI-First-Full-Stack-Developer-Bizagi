@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, booleanAttribute, inject, input, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -25,6 +25,9 @@ import { AuthLayout } from './auth-layout';
   ],
   template: `
     <app-auth-layout heading="Bienvenido de vuelta" subtitle="Inicia sesión para registrar tus predicciones.">
+      @if (accountDeleted() && !error()) {
+        <p class="info" role="status"><app-icon name="check_circle" /> Tu cuenta y tus datos fueron eliminados.</p>
+      }
       @if (error()) {
         <p class="error" role="alert"><app-icon name="error" /> {{ error() }}</p>
       }
@@ -69,6 +72,9 @@ export class LoginPage {
 
   /** Ruta a la que volver tras el login (query param, vía withComponentInputBinding). */
   readonly returnUrl = input<string>();
+  /** Query param tras eliminar la cuenta (HU-01.6). */
+  readonly cuentaEliminada = input(false, { transform: booleanAttribute });
+  protected readonly accountDeleted = this.cuentaEliminada;
 
   protected readonly form = inject(NonNullableFormBuilder).group({
     email: ['', [Validators.required, Validators.email]],

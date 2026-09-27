@@ -3,6 +3,7 @@
 
 export type { AdminMatch } from './models/admin-match';
 export type { AuthResponse } from './models/auth-response';
+export type { DeleteAccountRequest } from './models/delete-account-request';
 export type { LeaderboardEntry } from './models/leaderboard-entry';
 export type { LoginRequest } from './models/login-request';
 export type { Match } from './models/match';

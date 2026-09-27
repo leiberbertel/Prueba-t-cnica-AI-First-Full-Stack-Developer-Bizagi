@@ -29,9 +29,13 @@
         }
       </div>
       <button mat-menu-item (click)="logout()">
-        <app-icon name="logout" />
-        <span>Cerrar sesión</span>
+        <span class="menu-row"><app-icon name="logout" /> Cerrar sesión</span>
       </button>
+      @if (!auth.isAdmin()) {
+        <button mat-menu-item class="menu-danger" (click)="deleteAccount()">
+          <span class="menu-row"><app-icon name="person_remove" /> Eliminar mi cuenta</span>
+        </button>
+      }
     </mat-menu>
   </div>
 </header>

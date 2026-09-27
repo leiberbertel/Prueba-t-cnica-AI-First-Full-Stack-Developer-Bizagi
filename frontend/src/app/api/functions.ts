@@ -11,6 +11,8 @@ export type { Logout$Params as Logout$Params } from './fn/auth/logout';
 export { logout as logout } from './fn/auth/logout';
 export type { GetCurrentUser$Params as GetCurrentUser$Params } from './fn/auth/get-current-user';
 export { getCurrentUser as getCurrentUser } from './fn/auth/get-current-user';
+export type { DeleteMyAccount$Params as DeleteMyAccount$Params } from './fn/auth/delete-my-account';
+export { deleteMyAccount as deleteMyAccount } from './fn/auth/delete-my-account';
 export type { GetMySummary$Params as GetMySummary$Params } from './fn/leaderboard/get-my-summary';
 export { getMySummary as getMySummary } from './fn/leaderboard/get-my-summary';
 export type { GetLeaderboard$Params as GetLeaderboard$Params } from './fn/leaderboard/get-leaderboard';

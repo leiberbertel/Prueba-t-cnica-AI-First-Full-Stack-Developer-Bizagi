@@ -1,10 +1,17 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, finalize, firstValueFrom, map, shareReplay, tap } from 'rxjs';
+import { Observable, finalize, firstValueFrom, map, shareReplay } from 'rxjs';
 
 import { Api } from '../../api/api';
-import { login, logout, refresh, register } from '../../api/functions';
+import { deleteMyAccount, login, logout, refresh, register } from '../../api/functions';
 import { AuthResponse, LoginRequest, RegisterRequest, User } from '../../api/models';
+
+/** El visitante no tiene sesión (no hay cookie de refresh). Es un estado normal, no un fallo. */
+export class NoSessionError extends Error {
+  constructor() {
+    super('No hay sesión activa');
+  }
+}
 
 interface Session {
   user: User;
@@ -37,11 +44,19 @@ export class AuthStore {
     return this.authenticate(this.api.invoke(register, { body: data }));
   }
 
-  /** Renueva el access token. Llamadas concurrentes comparten una sola petición en vuelo. */
+  /**
+   * Renueva el access token. Llamadas concurrentes comparten una sola petición en vuelo.
+   * Si el backend responde 204 (no hay cookie: nunca se inició sesión), falla con {@link NoSessionError}.
+   */
   refresh(): Observable<string> {
     this.refreshInFlight ??= this.api.invoke(refresh).pipe(
-      tap((response) => this.start(response)),
-      map((response) => response.accessToken),
+      map((response: AuthResponse | null) => {
+        if (!response) {
+          throw new NoSessionError();
+        }
+        this.start(response);
+        return response.accessToken;
+      }),
       finalize(() => (this.refreshInFlight = null)),
       shareReplay({ bufferSize: 1, refCount: false }),
     );
@@ -63,6 +78,15 @@ export class AuthStore {
     } finally {
       this.endSession();
     }
+  }
+
+  /**
+   * Elimina la cuenta y todos sus datos (HU-01.6). El backend anonimiza al instante y purga en segundo plano;
+   * aquí solo se cierra la sesión local. La navegación la decide quien llama.
+   */
+  async deleteAccount(password: string): Promise<void> {
+    await firstValueFrom(this.api.invoke(deleteMyAccount, { body: { password } }));
+    this.endSession(false);
   }
 
   /** Sesión expirada o revocada: limpia el estado y lleva al login. */

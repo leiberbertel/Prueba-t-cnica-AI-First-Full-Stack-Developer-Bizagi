@@ -104,6 +104,18 @@
   margin-right: 8px;
 }
 
+// Ícono + texto alineados en los ítems del menú (app-icon no es mat-icon, así que se alinea a mano).
+.menu-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  line-height: 1;
+}
+
+.menu-danger {
+  --mat-menu-item-label-text-color: var(--mat-sys-error);
+}
+
 .menu-header {
   display: flex;
   flex-direction: column;
