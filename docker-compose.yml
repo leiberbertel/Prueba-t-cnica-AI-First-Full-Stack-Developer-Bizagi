@@ -4,6 +4,7 @@ name: polla-mundialista
 services:
   db:
     image: postgres:17-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB: polla
       POSTGRES_USER: ${DB_USERNAME:-polla}
@@ -19,6 +20,7 @@ services:
       retries: 10
 
   api:
+    restart: unless-stopped
     build:
       context: .
       dockerfile: backend/Dockerfile
@@ -38,6 +40,8 @@ services:
         condition: service_healthy
 
   web:
+    # Si Docker se reinicia y nginx arranca antes que la API, se reintenta hasta que la encuentre.
+    restart: unless-stopped
     build:
       context: frontend
     environment:
