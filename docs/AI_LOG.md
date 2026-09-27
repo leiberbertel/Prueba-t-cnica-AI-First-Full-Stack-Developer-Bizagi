@@ -141,8 +141,25 @@ más tiempo que uno visible. Ahora el script falla rápido y muestra la causa.
 
 ## 7 · Imágenes con Nano Banana
 
-*(Completar al generar las imágenes: prompt final, número de iteraciones, qué se ajustó y por qué.
-Los prompts base están en [`docs/imagenes.md`](imagenes.md).)*
+**Herramienta:** Nano Banana (Gemini). **Iteraciones:** 1. El primer resultado cumplió todos los criterios.
+
+**Prompt** (completo en [`docs/imagenes.md`](imagenes.md)): estadio nocturno a nivel de cancha, balón en primer
+plano con luz dorada, confeti dorado, paleta de la app (`#0b3d2e`, `#f2c94c`), **sin texto, logos, marcas, personas
+reconocibles ni camisetas reales**, formato vertical con el tercio inferior oscuro para el texto superpuesto.
+
+**Por qué se aceptó a la primera:** el prompt se escribió con las restricciones de la UI ya definidas (paleta, zona
+oscura para el título, formato del panel) y con las restricciones legales explícitas (nada de marcas oficiales del
+Mundial). Así, el resultado se evaluó contra criterios concretos y no "a gusto".
+
+**Integración (con ayuda de la IA):**
+
+| Paso | Decisión |
+|---|---|
+| Formato | JPG de 628 KB → **WebP de 62 KB** (calidad 82), 10 veces más liviano sin pérdida visible. El original se guarda en [`docs/assets/`](assets/hero-nano-banana-original.jpg) y no se despliega. |
+| Encuadre en escritorio | Con `center` el balón quedaba detrás del logo y del título. Se calculó la posición del balón según la escala `cover` y se ancló la imagen abajo (`center bottom`): el balón queda en 226–389 px y el texto empieza en 452 px. |
+| Encuadre en móvil | La franja de 200 px mostraba solo pasto. Una variable CSS (`--auth-hero-y: 62%`) encuadra el balón (79–164 px) sin tocar las demás capas del fondo. |
+| Respaldo | Si la imagen no carga, se mantiene la cancha dibujada con CSS de las capas inferiores. |
+| Seguridad | La imagen se sirve desde el mismo origen: la CSP (`img-src 'self'`) no necesitó cambios. |
 
 ---
 

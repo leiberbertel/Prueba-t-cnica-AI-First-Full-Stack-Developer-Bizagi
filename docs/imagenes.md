@@ -22,9 +22,11 @@ no real team jerseys. Vertical composition, empty dark area in the lower third f
 ```
 
 
-## Cómo activarlas
+## Estado
 
-1. Guarda la imagen en `frontend/public/images/` (convertir a WebP: `npx sharp-cli -i hero.png -o hero.webp`).
-2. Login/registro: en `frontend/src/app/features/auth/auth-layout.scss` define
-   `:host { --auth-hero-image: url('/images/hero.webp'); }`.
-3. Registra el prompt y la iteración en `docs/AI_LOG.md`.
+✅ **Integrada.** `frontend/public/images/hero.webp` (62 KB) se usa en el panel izquierdo de login y registro
+(`frontend/src/app/features/auth/auth-layout.scss`). El original generado está en
+`docs/assets/hero-nano-banana-original.jpg`. El proceso está registrado en [`AI_LOG.md`](AI_LOG.md#7--imágenes-con-nano-banana).
+
+Para reemplazarla: guarda la nueva imagen como `frontend/public/images/hero.webp`. Si el encuadre cambia, ajusta
+`center bottom` (escritorio) y `--auth-hero-y` (móvil) en `auth-layout.scss`.

@@ -1,10 +1,13 @@
 :host {
+  // Imagen generada con Nano Banana (Gemini). Ver docs/imagenes.md y docs/AI_LOG.md.
+  --auth-hero-image: url('/images/hero.webp');
+
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   min-height: 100vh;
 }
 
-// Ilustración generada con IA (ver docs/imagenes.md). Si no existe, queda la cancha dibujada en CSS.
+// Si la imagen no carga, queda de respaldo la cancha dibujada con CSS (capas inferiores).
 .hero {
   position: relative;
   display: flex;
@@ -13,8 +16,8 @@
   overflow: hidden;
   color: #fff;
   background:
-    linear-gradient(180deg, rgb(6 42 32 / 0.15) 0%, rgb(6 42 32 / 0.92) 85%),
-    var(--auth-hero-image, none) center / cover no-repeat,
+    linear-gradient(180deg, rgb(6 42 32 / 0) 35%, rgb(6 42 32 / 0.9) 90%),
+    var(--auth-hero-image, none) center var(--auth-hero-y, bottom) / cover no-repeat,
     radial-gradient(circle at 50% 50%, transparent 0 17%, rgb(255 255 255 / 0.18) 17% 17.6%, transparent 17.6%),
     linear-gradient(90deg, transparent 49.7%, rgb(255 255 255 / 0.18) 49.7% 50.3%, transparent 50.3%),
     repeating-linear-gradient(90deg, #0f5a40 0 60px, #0d5139 60px 120px);
@@ -95,6 +98,9 @@
   }
 
   .hero {
+    // En la franja móvil (200 px) se encuadra el balón en lugar del pasto inferior.
+    --auth-hero-y: 62%;
+
     min-height: 200px;
     padding: 24px 16px;
   }
