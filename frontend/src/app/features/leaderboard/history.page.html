@@ -1,0 +1,66 @@
+<div class="page">
+  <a class="back" routerLink="/ranking"><app-icon name="arrow_back" [size]="18" /> Volver al ranking</a>
+
+  @if (history.isLoading() && !history.hasValue()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando historial" />
+  } @else if (errorMessage()) {
+    <p class="empty" role="alert">{{ errorMessage() }}</p>
+  } @else if (history.value(); as h) {
+    <header class="page-header">
+      <div>
+        <h1>{{ isMine() ? 'Mis predicciones' : h.user.displayName }}</h1>
+        <p>
+          @if (isMine()) {
+            Todas tus predicciones, incluidas las de partidos que aún no empiezan.
+          } @else {
+            Solo se muestran partidos que ya cerraron: nadie puede copiar predicciones abiertas.
+          }
+        </p>
+      </div>
+      <div class="total"><span>{{ totalPoints() }}</span> pts</div>
+    </header>
+
+    <ul class="list">
+      @for (item of h.items; track item.matchId) {
+        <li class="item card">
+          <div class="item__meta">
+            <span>Grupo {{ item.group }}</span>
+            <time [attr.datetime]="item.kickoffAt">{{ item.kickoffAt | date: 'EEE d MMM · HH:mm' }}</time>
+          </div>
+          <div class="item__teams">
+            <app-team [team]="item.homeTeam" />
+            <app-team class="reverse" [team]="item.awayTeam" />
+          </div>
+          <dl class="item__scores">
+            <div>
+              <dt>Predicción</dt>
+              <dd>{{ item.prediction.homeGoals }} - {{ item.prediction.awayGoals }}</dd>
+            </div>
+            <div>
+              <dt>Resultado</dt>
+              <dd>
+                @if (item.result; as r) {
+                  {{ r.homeGoals }} - {{ r.awayGoals }}
+                } @else {
+                  <span class="muted">Pendiente</span>
+                }
+              </dd>
+            </div>
+            <div class="points">
+              @if (badge(item.points); as b) {
+                <span class="badge badge--{{ b.tone }}">{{ b.label }}</span>
+              } @else {
+                <span class="muted">Sin puntos aún</span>
+              }
+            </div>
+          </dl>
+        </li>
+      } @empty {
+        <li class="empty">
+          <app-icon name="history" [size]="40" />
+          <p>{{ isMine() ? 'Aún no has hecho predicciones.' : 'Todavía no hay predicciones visibles de este participante.' }}</p>
+        </li>
+      }
+    </ul>
+  }
+</div>

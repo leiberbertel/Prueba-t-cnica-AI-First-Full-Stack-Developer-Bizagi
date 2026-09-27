@@ -1,0 +1,67 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Ranking</h1>
+      <p>Desempate: puntos, luego marcadores exactos, luego aciertos de ganador. Toca un participante para ver su historial.</p>
+    </div>
+  </header>
+
+  @if (leaderboard.isLoading() && !leaderboard.hasValue()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando ranking" />
+  } @else if (errorMessage()) {
+    <p class="empty" role="alert">{{ errorMessage() }}</p>
+  } @else {
+    @if (podium().length) {
+      <ol class="podium" aria-label="Podio">
+        @for (entry of podium(); track entry.userId) {
+          <li class="podium__item podium__item--{{ $index + 1 }}">
+            <a [routerLink]="['/ranking', entry.userId]">
+              <span class="medal" aria-hidden="true">{{ entry.position }}</span>
+              <span class="podium__name">{{ entry.displayName }}</span>
+              <span class="podium__points">{{ entry.points }} <small>{{ entry.points === 1 ? 'pt' : 'pts' }}</small></span>
+            </a>
+          </li>
+        }
+      </ol>
+    }
+
+    <div class="table-wrap card">
+      <table>
+        <caption class="visually-hidden">Tabla de posiciones</caption>
+        <thead>
+          <tr>
+            <th scope="col" class="num">#</th>
+            <th scope="col">Participante</th>
+            <th scope="col" class="num">Pts</th>
+            <th scope="col" class="num" title="Marcadores exactos">Exactos</th>
+            <th scope="col" class="num hide-sm" title="Aciertos de ganador o empate">Ganador</th>
+            <th scope="col" class="num hide-sm" title="Predicciones con resultado">Jugados</th>
+            <th scope="col"><span class="visually-hidden">Ver historial</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of entries(); track entry.userId) {
+            <tr [class.me]="isMe(entry)" (click)="open(entry)">
+              <td class="num pos">{{ entry.position }}</td>
+              <th scope="row">
+                <a [routerLink]="['/ranking', entry.userId]" (click)="$event.stopPropagation()">{{ entry.displayName }}</a>
+                @if (isMe(entry)) {
+                  <span class="you">Tú</span>
+                }
+              </th>
+              <td class="num points">{{ entry.points }}</td>
+              <td class="num">{{ entry.exactHits }}</td>
+              <td class="num hide-sm">{{ entry.outcomeHits }}</td>
+              <td class="num hide-sm">{{ entry.scoredPredictions }}</td>
+              <td class="chevron"><app-icon name="chevron_right" /></td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="empty">Aún no hay participantes. ¡Invita a tu grupo!</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

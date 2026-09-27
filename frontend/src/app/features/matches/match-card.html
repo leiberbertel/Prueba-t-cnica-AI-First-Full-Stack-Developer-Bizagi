@@ -1,0 +1,67 @@
+<div class="meta">
+  <span class="chip">Grupo {{ match().group }} · Fecha {{ match().matchday }}</span>
+  <span class="time">
+    <app-icon name="schedule" [size]="16" />
+    <time [attr.datetime]="match().kickoffAt">{{ match().kickoffAt | date: 'EEE d MMM · HH:mm' }}</time>
+  </span>
+  @if (match().venue) {
+    <span class="venue"><app-icon name="location_on" [size]="16" /> {{ match().venue }}</span>
+  }
+</div>
+
+<div class="teams">
+  <app-team [team]="match().homeTeam" />
+
+  @if (match().result; as result) {
+    <div class="result" aria-label="Resultado final">
+      <span>{{ result.homeGoals }}</span><span class="sep">-</span><span>{{ result.awayGoals }}</span>
+    </div>
+  } @else {
+    <span class="vs" aria-hidden="true">vs</span>
+  }
+
+  <app-team class="reverse" [team]="match().awayTeam" />
+</div>
+
+@if (canPredict()) {
+  @if (open()) {
+    <div class="predict">
+      <app-score-stepper [(value)]="home" [label]="match().homeTeam.name" [disabled]="saving()" />
+      <span class="dash" aria-hidden="true">–</span>
+      <app-score-stepper [(value)]="away" [label]="match().awayTeam.name" [disabled]="saving()" />
+    </div>
+    <div class="footer">
+      <span class="status status--open">
+        <app-icon name="lock_open" [size]="16" /> Cierra {{ closesIn() }}
+      </span>
+      <button mat-flat-button (click)="save()" [disabled]="saving() || !dirty()">
+        {{ match().myPrediction ? (dirty() ? 'Actualizar' : 'Guardada') : 'Guardar' }}
+      </button>
+    </div>
+  } @else {
+    <div class="footer">
+      @if (match().myPrediction; as prediction) {
+        <span class="mine">Tu predicción: <strong>{{ prediction.homeGoals }} - {{ prediction.awayGoals }}</strong></span>
+      } @else {
+        <span class="mine mine--none">No predijiste este partido</span>
+      }
+      @if (badge(); as badge) {
+        <span class="badge badge--{{ badge.tone }}">{{ badge.label }}</span>
+      } @else {
+        <span class="status"><app-icon name="lock" [size]="16" /> Cerrado · esperando resultado</span>
+      }
+    </div>
+  }
+} @else {
+  <div class="footer">
+    <span class="status">
+      @if (match().status === 'FINISHED') {
+        <app-icon name="check_circle" [size]="16" /> Resultado registrado
+      } @else if (open()) {
+        <app-icon name="lock_open" [size]="16" /> Abierto · cierra {{ closesIn() }}
+      } @else {
+        <app-icon name="lock" [size]="16" /> Cerrado · pendiente de resultado
+      }
+    </span>
+  </div>
+}

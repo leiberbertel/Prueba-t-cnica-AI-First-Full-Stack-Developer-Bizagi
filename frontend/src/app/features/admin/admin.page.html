@@ -1,0 +1,50 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Resultados</h1>
+      <p>Registra el marcador final de cada partido. Puedes corregirlo después: los puntos se recalculan solos.</p>
+    </div>
+    @if (matches.hasValue()) {
+      <div class="progress" aria-label="Partidos con resultado">
+        <strong>{{ finishedCount() }}</strong> / {{ matches.value()!.length }} con resultado
+      </div>
+    }
+  </header>
+
+  @if (matches.isLoading() && !matches.hasValue()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Cargando partidos" />
+  } @else if (errorMessage()) {
+    <p class="empty" role="alert">{{ errorMessage() }}</p>
+  } @else {
+    <ul class="list">
+      @for (match of matches.value(); track match.id) {
+        <li class="row card" [class.row--done]="match.status === 'FINISHED'">
+          <div class="row__info">
+            <span class="chip">Grupo {{ match.group }} · F{{ match.matchday }}</span>
+            <time [attr.datetime]="match.kickoffAt">{{ match.kickoffAt | date: 'EEE d MMM · HH:mm' }}</time>
+            <span class="count"><app-icon name="group" [size]="16" /> {{ match.predictionsCount }} predicciones</span>
+          </div>
+
+          <div class="row__form">
+            <app-team [team]="match.homeTeam" />
+            <app-score-stepper [value]="draft(match).homeGoals" (valueChange)="setGoals(match, 'homeGoals', $event)"
+                               [label]="match.homeTeam.name" [disabled]="savingId() === match.id" />
+            <span class="dash" aria-hidden="true">–</span>
+            <app-score-stepper [value]="draft(match).awayGoals" (valueChange)="setGoals(match, 'awayGoals', $event)"
+                               [label]="match.awayTeam.name" [disabled]="savingId() === match.id" />
+            <app-team class="reverse" [team]="match.awayTeam" />
+          </div>
+
+          <div class="row__actions">
+            @if (match.status === 'FINISHED') {
+              <span class="done"><app-icon name="check_circle" [size]="18" /> Registrado</span>
+            }
+            <button mat-flat-button (click)="save(match)" [disabled]="savingId() !== null || isUnchanged(match)">
+              {{ match.status === 'FINISHED' ? 'Corregir' : 'Registrar' }}
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</div>

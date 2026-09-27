@@ -1,0 +1,125 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  background: var(--mat-sys-surface-container-low);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--app-radius);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+
+  &:hover {
+    border-color: var(--mat-sys-outline);
+  }
+}
+
+:host(.closed:not(.finished)) {
+  background: var(--mat-sys-surface-container);
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  font-size: 0.8rem;
+  color: var(--app-muted);
+
+  .time,
+  .venue {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  time {
+    display: inline-block;
+  }
+
+  time::first-letter {
+    text-transform: uppercase;
+  }
+}
+
+.chip {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--mat-sys-surface-container-highest);
+  color: var(--mat-sys-on-surface);
+  font-weight: 600;
+}
+
+.teams {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  font-size: 1.05rem;
+}
+
+.vs {
+  font-family: Outfit, sans-serif;
+  font-weight: 700;
+  color: var(--app-muted);
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+.result {
+  display: flex;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  background: var(--app-pitch);
+  color: #fff;
+  font: 800 1.6rem/1.2 Outfit, sans-serif;
+
+  .sep {
+    opacity: 0.6;
+  }
+}
+
+.predict {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.dash {
+  font: 700 1.5rem Outfit, sans-serif;
+  color: var(--app-muted);
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--app-muted);
+
+  &--open {
+    color: var(--app-success);
+    font-weight: 600;
+  }
+}
+
+.mine {
+  font-size: 0.9rem;
+
+  &--none {
+    color: var(--app-muted);
+    font-style: italic;
+  }
+}
+
