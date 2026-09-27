@@ -22,7 +22,7 @@ erDiagram
     REFRESH_TOKENS {
         bigint id PK
         bigint user_id FK
-        char token_hash UK "SHA-256 hex"
+        varchar token_hash UK "SHA-256 hex"
         timestamptz expires_at
         timestamptz revoked_at "null = activo"
         timestamptz created_at
@@ -31,20 +31,20 @@ erDiagram
         bigint id PK
         varchar code UK "COL, ARG..."
         varchar name
-        char flag_code "ISO alpha-2"
-        char group_code
+        varchar flag_code "ISO alpha-2"
+        varchar group_code
     }
     MATCHES {
         bigint id PK
-        char group_code
-        smallint matchday "1..3"
+        varchar group_code
+        int matchday "1..3"
         bigint home_team_id FK
         bigint away_team_id FK
         timestamptz kickoff_at
         varchar venue
         varchar status "SCHEDULED | FINISHED"
-        smallint home_goals "null hasta resultado"
-        smallint away_goals
+        int home_goals "null hasta resultado"
+        int away_goals
         timestamptz result_registered_at
         bigint version "concurrencia optimista"
     }
@@ -52,9 +52,9 @@ erDiagram
         bigint id PK
         bigint user_id FK
         bigint match_id FK
-        smallint home_goals
-        smallint away_goals
-        smallint points "null hasta resultado"
+        int home_goals
+        int away_goals
+        int points "null hasta resultado"
         timestamptz created_at
         timestamptz updated_at
     }
