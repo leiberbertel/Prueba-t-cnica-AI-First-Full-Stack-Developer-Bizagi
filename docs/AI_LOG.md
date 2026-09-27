@@ -90,7 +90,56 @@ detalle estético que no justifica el riesgo de una navegación colgada durante 
 
 ---
 
-## 5 · Imágenes con Nano Banana
+## 5 · Criterio humano: "¿el script tiene credenciales quemadas?"
+
+**Contexto:** el primer script de despliegue generaba los secretos al azar, pero los guardaba en texto plano en un
+archivo local y los pasaba como argumentos a `az`. Además, `.env.example` traía un secreto JWT de desarrollo.
+
+**Prompt (mío, al revisar el script):**
+
+```text
+¿Azure tiene un servicio donde podemos colocar los secretos, usemos ese. Veo que el .sh que creaste tiene credenciales quemadas.
+```
+
+**Resultado:** la IA aclaró que no había valores fijos (se generaban al azar), pero reconoció las debilidades reales:
+texto plano en disco, secretos visibles en la lista de procesos, sin auditoría ni rotación, y un secreto de desarrollo
+en el repo. Propuso **Azure Key Vault + Managed Identity**:
+
+- los secretos se generan directamente en el vault;
+- los Container Apps los leen **por referencia**;
+- ningún secreto queda en el repo, en disco ni en argv.
+
+Lo documentamos en [ADR-0006](../specs/adr/0006-gestion-de-secretos.md).
+
+**Aprendizaje:** revisar lo que genera la IA con la pregunta "¿qué pasaría si esto se filtra?" llevó a un diseño más
+seguro que el que la IA propuso al principio.
+
+---
+
+## 6 · Bloqueos del despliegue en Azure
+
+Tres fallos seguidos, cada uno con una causa distinta. La IA los diagnosticó leyendo el error real y la documentación
+oficial, en lugar de adivinar.
+
+| # | Síntoma | Causa | Solución |
+|---|---|---|---|
+| 1 | `RequestDisallowedByAzure` al crear el registro | La suscripción solo permite 5 regiones (política *Allowed resource deployment regions*) | Consultar la política con `az policy assignment list`, verificar la disponibilidad de servicios y usar **Mexico Central** (la más cercana a Colombia) |
+| 2 | No se podía guardar el secreto en Key Vault, sin mensaje de error | Git Bash convierte los argumentos que empiezan con `/` (los IDs `/subscriptions/...`) en rutas de Windows, así que la asignación de rol RBAC fallaba en silencio. Después, `az` (programa nativo) no encontraba archivos en `/tmp/...` | `MSYS_NO_PATHCONV=1` para los IDs y `cygpath -w` para los archivos. El script ahora **muestra el error real** en lugar de silenciarlo |
+| 3 | `ExpressEnvironmentFeatureNotSupported: KeyVaultUrl in secrets` | La CLI actual crea los entornos de Container Apps en modo **express**, que no soporta referencias a Key Vault ni el descubrimiento interno de servicios (web → api). `--enable-workload-profiles` **no** cambia el modo | La API *preview* mostraba `environmentMode: Express`. Con la extensión `containerapp` se usa `--environment-mode WorkloadProfiles` |
+
+**Prompt clave (fallo 3):**
+
+```text
+Creé el entorno con --enable-workload-profiles true y sigue diciendo que es express.
+¿Cómo decide Azure el modo del entorno? Busca en la documentación oficial y verifica el valor real en el recurso.
+```
+
+**Aprendizaje:** el fallo 2 lo empeoró mi propio script, que tenía `2>/dev/null || true`: un error silenciado cuesta
+más tiempo que uno visible. Ahora el script falla rápido y muestra la causa.
+
+---
+
+## 7 · Imágenes con Nano Banana
 
 *(Completar al generar las imágenes: prompt final, número de iteraciones, qué se ajustó y por qué.
 Los prompts base están en [`docs/imagenes.md`](imagenes.md).)*
@@ -100,6 +149,9 @@ Los prompts base están en [`docs/imagenes.md`](imagenes.md).)*
 ## Qué NO delegué a la IA
 
 - **Reglas de negocio y alcance:** la revisión de la spec (RN-09, visibilidad de predicciones ajenas, desempates).
-- **Decisiones de seguridad:** dónde vive cada token y por qué (ADR-0004).
+- **Decisiones de seguridad:** dónde vive cada token y por qué (ADR-0004), y exigir que los secretos salieran del
+  repo y del disco (ADR-0006).
+- **Decisiones de plataforma:** mantener Azure en lugar de migrar a otro proveedor cuando aparecieron los bloqueos.
 - **Verificación:** nada se dio por terminado sin evidencia. Suite backend (40 pruebas), frontend (16), prueba manual en
-  navegador y *smoke test* del stack dockerizado con `curl`.
+  navegador, *smoke test* del stack dockerizado con `curl`, y *smoke test* de la URL pública en Azure (login, refresh,
+  403 para no-admin, cabeceras de seguridad), leyendo las credenciales del vault sin imprimirlas.

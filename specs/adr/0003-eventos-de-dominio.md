@@ -21,8 +21,8 @@ Opción 3, con el **Event Publication Registry** de Spring Modulith (tabla `even
 - `scoring` lo procesa **después del commit** (`@ApplicationModuleListener`) en su propia transacción.
 - Si el listener falla, la publicación queda **incompleta** en la tabla y se reintenta al reiniciar
   (garantía *at-least-once*, patrón outbox).
-- Por eso el recálculo es **idempotente**: `UPDATE predictions SET points = f(pred, real) WHERE match_id = ?`
-  sobrescribe los puntos, así que procesar el evento dos veces no duplica nada.
+- Por eso el recálculo es **idempotente**: `PredictionLedger.scoreMatch` **asigna** (no suma) los puntos de cada
+  predicción del partido con `ScoringPolicy`, así que procesar el evento dos veces no duplica nada.
 
 ## Consecuencias
 
@@ -30,4 +30,4 @@ Opción 3, con el **Event Publication Registry** de Spring Modulith (tabla `even
   es agregar un listener.
 - (+) Los puntos se guardan (`predictions.points`), así que el ranking es una agregación barata.
 - (−) Consistencia eventual de milisegundos entre registrar el resultado y ver los puntos. En las pruebas de
-  integración se espera el evento con `Scenario` de Spring Modulith.
+  integración se espera el resultado del recálculo con Awaitility.

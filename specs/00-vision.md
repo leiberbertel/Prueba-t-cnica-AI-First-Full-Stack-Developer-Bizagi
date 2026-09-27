@@ -62,7 +62,7 @@ sumar puntos según aciertos y ver una tabla de posiciones. Un administrador car
 | RNF-03 | Contraseñas con BCrypt; access token JWT de vida corta; refresh token en cookie `HttpOnly`. |
 | RNF-04 | Backend *stateless*: escala horizontalmente sin sesión en memoria. |
 | RNF-05 | Errores con formato uniforme RFC 9457 (`application/problem+json`). |
-| RNF-06 | Pruebas automatizadas: unitarias (dominio), integración (Postgres real con Testcontainers) y e2e. |
+| RNF-06 | Pruebas automatizadas: unitarias (dominio), integración (Postgres real con Testcontainers), arquitectura (límites de módulos), contrato (OpenAPI) y componentes del frontend. |
 | RNF-07 | Levantar el proyecto localmente con un solo comando (`docker compose up`). |
 | RNF-08 | UI responsive (móvil primero) y accesible (WCAG AA en contraste y navegación por teclado). |
 

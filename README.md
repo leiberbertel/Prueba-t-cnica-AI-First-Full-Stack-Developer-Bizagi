@@ -6,6 +6,9 @@ un ranking. El administrador carga los resultados reales y los puntos se recalcu
 **Stack:** Java 21 · Spring Boot 4.1 · Spring Modulith · Spring Security (JWT) · PostgreSQL 17 · Flyway ·
 Angular 21 (zoneless, signals) · Angular Material 3 · Docker · GitHub Actions
 
+**Demo en línea:** https://polla-web.kindhill-24f34a52.mexicocentral.azurecontainerapps.io
+(Azure Container Apps, Mexico Central; las credenciales de prueba se entregan por correo).
+
 > Desarrollado con enfoque **AI-First** y **Spec-Driven Development**: las specs y el contrato OpenAPI se escribieron
 > antes que el código. Ver [`specs/`](specs/), [`docs/AI_LOG.md`](docs/AI_LOG.md) y [`CLAUDE.md`](CLAUDE.md).
 
@@ -48,7 +51,7 @@ Reglas de negocio destacadas (detalle en [00-vision](specs/00-vision.md)):
 Requisitos: Docker.
 
 ```bash
-cp .env.example .env
+./scripts/init-env.sh        # crea .env con secretos aleatorios (nada de secretos en el repo)
 docker compose up --build
 ```
 
@@ -78,7 +81,7 @@ Abre **http://localhost:4200**.
 
 | Variable | Descripción | Default |
 |---|---|---|
-| `JWT_SECRET` | Secreto HS256 en Base64 (≥ 32 bytes). **Obligatoria** fuera del perfil `local`. | — |
+| `JWT_SECRET` | Secreto HS256 en Base64 (≥ 32 bytes). **Obligatoria** fuera del perfil `local` (ahí se usa una clave efímera). | — |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Cuenta admin creada al arrancar | — |
 | `DB_URL` / `DB_USERNAME` / `DB_PASSWORD` | Conexión a PostgreSQL | `localhost:5432/polla` |
 | `DEMO_DATA` / `DEMO_PASSWORD` | Crea 4 participantes demo con predicciones | `false` |
@@ -91,8 +94,11 @@ Con `DEMO_DATA=true` (por defecto en Docker y en modo desarrollo):
 
 | Rol | Email | Contraseña |
 |---|---|---|
-| Admin | `admin@polla.local` | valor de `ADMIN_PASSWORD` (`.env.example`) |
-| Usuario | `ana@polla.local` (también `carlos@`, `valentina@`, `diego@`) | valor de `DEMO_PASSWORD` (`.env.example`) |
+| Admin | `admin@polla.local` | `ADMIN_PASSWORD` de tu `.env` (en modo desarrollo: `Admin12345`) |
+| Usuario | `ana@polla.local` (también `carlos@`, `valentina@`, `diego@`) | `DEMO_PASSWORD` de tu `.env` (en modo desarrollo: `Usuario123`) |
+
+> Las credenciales del entorno desplegado **no están en el repo**: viven en Azure Key Vault
+> ([ADR-0006](specs/adr/0006-gestion-de-secretos.md)) y se entregan por correo.
 
 ## Arquitectura
 
@@ -138,6 +144,7 @@ Cada decisión relevante está registrada como ADR:
 | [0003](specs/adr/0003-eventos-de-dominio.md) | Recálculo de puntos por eventos de dominio, idempotente |
 | [0004](specs/adr/0004-estrategia-tokens.md) | JWT en memoria + refresh token en cookie HttpOnly |
 | [0005](specs/adr/0005-contract-first.md) | Contract-first con OpenAPI y cliente Angular generado |
+| [0006](specs/adr/0006-gestion-de-secretos.md) | Secretos en Azure Key Vault + Managed Identity |
 
 Esquema de base de datos: [`specs/database.md`](specs/database.md) (migraciones en
 `backend/src/main/resources/db/migration`).
@@ -153,7 +160,9 @@ Esquema de base de datos: [`specs/database.md`](specs/database.md) (migraciones 
 - Autorización en **dos capas** (URL + `@PreAuthorize`); el front oculta la UI pero la regla vive en el backend.
 - Concurrencia optimista (`@Version`) en resultados; `UNIQUE(user_id, match_id)` en predicciones.
 - Errores uniformes **RFC 9457** sin *stack traces*; cabeceras CSP, `X-Frame-Options`, `nosniff`.
-- Secretos solo por variables de entorno; la app **no arranca** sin un `JWT_SECRET` válido.
+- **Sin secretos en el repo.** En Azure viven en **Key Vault** y los Container Apps los leen por referencia con una
+  **identidad administrada** ([ADR-0006](specs/adr/0006-gestion-de-secretos.md)). La app **no arranca** sin un
+  `JWT_SECRET` válido.
 
 ## Calidad y pruebas
 
@@ -181,4 +190,6 @@ frontend/               Angular 21 · src/app/{core,features,api(generado)}
 docs/                   Arquitectura (C4), AI_LOG
 CLAUDE.md               Reglas para agentes de IA en este repo
 docker-compose.yml      Stack completo: db + api + web
+infra/azure/deploy.sh   Despliegue en Azure: Container Apps + PostgreSQL + Key Vault
+scripts/init-env.sh     Genera un .env local con secretos aleatorios
 ```
