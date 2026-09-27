@@ -1,10 +1,13 @@
 package dev.leiber.polla.shared.security;
 
+import java.security.SecureRandom;
 import java.util.Base64;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
@@ -24,12 +27,20 @@ import com.nimbusds.jose.jwk.source.ImmutableSecret;
 @Configuration(proxyBeanMethods = false)
 class JwtKeyConfig {
 
+    private static final Logger log = LoggerFactory.getLogger(JwtKeyConfig.class);
     private static final int MIN_SECRET_BYTES = 32;
 
     @Bean
     SecretKey jwtSecretKey(SecurityProperties properties) {
         var secret = properties.jwt().secret();
         if (secret == null || secret.isBlank()) {
+            if (properties.jwt().ephemeralSecretAllowed()) {
+                log.warn("JWT_SECRET no configurado: usando una clave efímera (solo desarrollo local). "
+                        + "Las sesiones se invalidan al reiniciar.");
+                byte[] random = new byte[48];
+                new SecureRandom().nextBytes(random);
+                return new SecretKeySpec(random, "HmacSHA256");
+            }
             throw new IllegalStateException(
                     "Falta JWT_SECRET (Base64, >= 32 bytes). Genera uno con: openssl rand -base64 48");
         }

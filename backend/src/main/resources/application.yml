@@ -47,6 +47,7 @@ app:
     jwt:
       # Secreto HS256 codificado en Base64 (mínimo 32 bytes). Obligatorio fuera del perfil local.
       secret: ${JWT_SECRET:}
+      ephemeral-secret-allowed: false
       issuer: polla-mundialista
       access-token-ttl: 15m
     refresh-token:
@@ -67,7 +68,7 @@ app:
   demo:
     # Participantes demo con predicciones (nunca resultados). Útil para la presentación.
     enabled: ${DEMO_DATA:false}
-    password: ${DEMO_PASSWORD:Usuario123}
+    password: ${DEMO_PASSWORD:}
   scoring:
     exact-points: 3
     outcome-points: 1

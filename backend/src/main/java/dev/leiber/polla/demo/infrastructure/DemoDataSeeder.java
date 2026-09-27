@@ -1,4 +1,4 @@
-package dev.leiber.polla.demo;
+package dev.leiber.polla.demo.infrastructure;
 
 import java.time.Clock;
 import java.time.ZoneOffset;
@@ -39,7 +39,7 @@ class DemoDataSeeder implements ApplicationRunner {
     private final String password;
 
     DemoDataSeeder(JdbcClient jdbc, PasswordEncoder passwordEncoder, Clock clock,
-            @Value("${app.demo.password:Usuario123}") String password) {
+            @Value("${app.demo.password:}") String password) {
         this.jdbc = jdbc;
         this.passwordEncoder = passwordEncoder;
         this.clock = clock;
@@ -49,6 +49,10 @@ class DemoDataSeeder implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
+        if (password == null || password.isBlank()) {
+            log.warn("DEMO_DATA=true pero DEMO_PASSWORD no está configurado: no se crean participantes demo.");
+            return;
+        }
         var now = clock.instant().atOffset(ZoneOffset.UTC);
         List<Long> matchIds = jdbc.sql("select id from matches order by kickoff_at, id").query(Long.class).list();
         var hash = passwordEncoder.encode(password);

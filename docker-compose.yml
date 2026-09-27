@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_DB: polla
       POSTGRES_USER: ${DB_USERNAME:-polla}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-polla}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD en .env (./scripts/init-env.sh)}
     ports:
       - "5432:5432"
     volumes:
@@ -25,12 +25,12 @@ services:
     environment:
       DB_URL: jdbc:postgresql://db:5432/polla
       DB_USERNAME: ${DB_USERNAME:-polla}
-      DB_PASSWORD: ${DB_PASSWORD:-polla}
-      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env (ver .env.example)}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env (./scripts/init-env.sh)}
       ADMIN_EMAIL: ${ADMIN_EMAIL:?Define ADMIN_EMAIL en .env}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Define ADMIN_PASSWORD en .env}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Define ADMIN_PASSWORD en .env (./scripts/init-env.sh)}
       DEMO_DATA: ${DEMO_DATA:-true}
-      DEMO_PASSWORD: ${DEMO_PASSWORD:-Usuario123}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:?Define DEMO_PASSWORD en .env (./scripts/init-env.sh)}
       # http://localhost no usa TLS; en producción (HTTPS) debe ser true.
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
     depends_on:

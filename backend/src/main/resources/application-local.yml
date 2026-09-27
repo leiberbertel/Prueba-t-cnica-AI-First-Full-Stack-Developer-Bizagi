@@ -1,12 +1,16 @@
-# Perfil para desarrollo local. NUNCA usar estos valores en producción.
+# Perfil para desarrollo local (./mvnw spring-boot:test-run). NUNCA se usa en producción.
+# No contiene secretos: si no defines JWT_SECRET, se genera una clave efímera en cada arranque (ADR-0006).
 app:
   security:
     jwt:
-      secret: ${JWT_SECRET:bG9jYWwtZGV2LW9ubHktc2VjcmV0LWRvLW5vdC11c2UtaW4tcHJvZHVjdGlvbiEh}
+      secret: ${JWT_SECRET:}
+      ephemeral-secret-allowed: true
     refresh-token:
       cookie-secure: ${COOKIE_SECURE:false}
+  # Cuentas de desarrollo local (base de datos desechable de Testcontainers).
   admin:
     email: ${ADMIN_EMAIL:admin@polla.local}
     password: ${ADMIN_PASSWORD:Admin12345}
   demo:
     enabled: ${DEMO_DATA:true}
+    password: ${DEMO_PASSWORD:Usuario123}
