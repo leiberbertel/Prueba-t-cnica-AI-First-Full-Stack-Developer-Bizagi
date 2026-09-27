@@ -8,6 +8,12 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/polla}
     username: ${DB_USERNAME:polla}
     password: ${DB_PASSWORD:polla}
+    hikari:
+      # Fallar rápido (ADR-0007): esperar una conexión del pool como máximo 5 s.
+      connection-timeout: 5000
+      data-source-properties:
+        # Límites para TODA sentencia de la app: nada puede quedar bloqueado indefinidamente.
+        options: "-c lock_timeout=5000 -c statement_timeout=15000"
   jpa:
     open-in-view: false
     hibernate:
@@ -69,6 +75,18 @@ app:
     # Participantes demo con predicciones (nunca resultados). Útil para la presentación.
     enabled: ${DEMO_DATA:false}
     password: ${DEMO_PASSWORD:}
+  # Purga por lotes (ADR-0007): cada lote es una transacción corta con sus propios timeouts.
+  purge:
+    batch-size: 5000
+    lock-timeout: 2s
+    statement-timeout: 10s
+  account-deletion:
+    # Cada cuánto se intenta borrar la fila de cuentas eliminadas cuyos datos ya se purgaron.
+    finalize-interval: PT1M
+  events:
+    # Reenvío de eventos cuyo listener falló (p. ej. timeout de un lote).
+    retry-interval: PT5M
+    retry-older-than: PT5M
   scoring:
     exact-points: 3
     outcome-points: 1

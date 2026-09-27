@@ -101,6 +101,14 @@ class AuthIntegrationTest extends IntegrationTest {
     }
 
     @Test
+    void refreshWithoutCookieMeansNoSessionNotAnError() throws Exception { // CA-01.7
+        mvc.perform(post("/api/v1/auth/refresh"))
+                .andExpect(status().isNoContent());
+        mvc.perform(post("/api/v1/auth/refresh").cookie(new Cookie("refresh_token", "no-existe")))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void logoutRevokesRefreshTokenAndClearsCookie() throws Exception { // CA-01.9
         var session = register("Salida");
 

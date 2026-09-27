@@ -35,6 +35,10 @@ public class UserAccount {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    /** Distinto de null: la cuenta fue eliminada y sus datos se están purgando (ADR-0007). */
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
     protected UserAccount() {
     }
 
@@ -44,6 +48,21 @@ public class UserAccount {
         this.passwordHash = passwordHash;
         this.role = role;
         this.createdAt = createdAt;
+    }
+
+    /**
+     * Fase síncrona de la eliminación (HU-01.6): se anonimizan los datos personales de inmediato. La fila solo se
+     * conserva hasta que los demás módulos purguen sus datos. El email queda libre para registrarse de nuevo.
+     */
+    public void markDeleted(Instant now) {
+        this.email = "deleted+" + id + "@polla.invalid";
+        this.displayName = "Cuenta eliminada";
+        this.passwordHash = "!"; // no es un hash BCrypt válido: ninguna contraseña coincide
+        this.deletedAt = now;
+    }
+
+    public boolean isDeleted() {
+        return deletedAt != null;
     }
 
     public Long getId() {

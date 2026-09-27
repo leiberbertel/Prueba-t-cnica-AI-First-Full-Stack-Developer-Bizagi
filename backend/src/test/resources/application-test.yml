@@ -9,3 +9,9 @@ app:
     password: Admin12345
   demo:
     enabled: false
+  purge:
+    # Lotes pequeños para ejercitar varias iteraciones en las pruebas.
+    batch-size: 2
+  account-deletion:
+    # Las pruebas invocan el finalizador directamente.
+    finalize-interval: PT1H

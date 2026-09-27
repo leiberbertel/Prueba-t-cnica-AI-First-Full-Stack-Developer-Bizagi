@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,6 +20,7 @@ import dev.leiber.polla.auth.application.AuthService;
 import dev.leiber.polla.auth.application.AuthService.AuthResult;
 import dev.leiber.polla.auth.application.LoginRateLimiter;
 import dev.leiber.polla.auth.web.AuthDtos.AuthResponse;
+import dev.leiber.polla.auth.web.AuthDtos.DeleteAccountRequest;
 import dev.leiber.polla.auth.web.AuthDtos.LoginRequest;
 import dev.leiber.polla.auth.web.AuthDtos.RegisterRequest;
 import dev.leiber.polla.auth.web.AuthDtos.UserResponse;
@@ -54,9 +56,13 @@ class AuthController {
         return withRefreshCookie(ResponseEntity.ok(), result);
     }
 
+    /** CA-01.7: sin cookie no hay sesión que renovar; es un estado normal (204), no un error (401). */
     @PostMapping("/auth/refresh")
     ResponseEntity<AuthResponse> refresh(@CookieValue(name = "${app.security.refresh-token.cookie-name}",
             required = false) String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            return ResponseEntity.noContent().header(HttpHeaders.CACHE_CONTROL, "no-store").build();
+        }
         var result = authService.refresh(refreshToken);
         return withRefreshCookie(ResponseEntity.ok(), result);
     }
@@ -73,6 +79,19 @@ class AuthController {
     @GetMapping("/me")
     UserResponse me(@AuthenticationPrincipal Jwt jwt) {
         return UserResponse.from(authService.getUser(CurrentUser.id(jwt)));
+    }
+
+    /**
+     * HU-01.6: elimina mi cuenta y mis datos. Responde 202: los datos personales ya se anonimizaron y el resto se purga
+     * en segundo plano (ADR-0007). Borra también la cookie de refresh del navegador.
+     */
+    @DeleteMapping("/me")
+    ResponseEntity<Void> deleteMyAccount(@AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody DeleteAccountRequest request) {
+        authService.deleteAccount(CurrentUser.id(jwt), request.password());
+        return ResponseEntity.accepted()
+                .header(HttpHeaders.SET_COOKIE, refreshCookie("", Duration.ZERO).toString())
+                .build();
     }
 
     private ResponseEntity<AuthResponse> withRefreshCookie(ResponseEntity.BodyBuilder builder, AuthResult result) {

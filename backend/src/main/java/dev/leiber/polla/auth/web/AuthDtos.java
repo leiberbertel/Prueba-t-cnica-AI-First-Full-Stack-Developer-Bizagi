@@ -38,6 +38,10 @@ final class AuthDtos {
         }
     }
 
+    record DeleteAccountRequest(
+            @NotBlank(message = "La contraseña es obligatoria") String password) {
+    }
+
     record UserResponse(Long id, String email, String displayName, String role) {
 
         static UserResponse from(UserAccount user) {

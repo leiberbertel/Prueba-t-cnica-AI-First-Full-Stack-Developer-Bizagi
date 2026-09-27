@@ -103,6 +103,11 @@ public class TokenService {
     }
 
     @Transactional
+    public void revokeAllForUser(long userId) {
+        refreshTokens.revokeAllForUser(userId, clock.instant());
+    }
+
+    @Transactional
     public void revoke(String rawToken) {
         refreshTokens.findByTokenHash(hash(rawToken)).ifPresent(token -> token.revoke(clock.instant()));
     }

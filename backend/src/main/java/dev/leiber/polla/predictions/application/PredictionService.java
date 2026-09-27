@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import dev.leiber.polla.auth.AccountDirectory;
 import dev.leiber.polla.matches.MatchCatalog;
 import dev.leiber.polla.matches.MatchView;
 import dev.leiber.polla.matches.PredictionStatistics;
@@ -18,17 +19,21 @@ import dev.leiber.polla.predictions.PredictionLedger;
 import dev.leiber.polla.predictions.domain.Prediction;
 import dev.leiber.polla.predictions.infrastructure.PredictionRepository;
 import dev.leiber.polla.shared.error.ConflictException;
+import dev.leiber.polla.shared.error.UnauthorizedException;
 
 @Service
 public class PredictionService implements PredictionLedger, PredictionStatistics {
 
     private final PredictionRepository predictions;
     private final MatchCatalog matches;
+    private final AccountDirectory accounts;
     private final Clock clock;
 
-    PredictionService(PredictionRepository predictions, MatchCatalog matches, Clock clock) {
+    PredictionService(PredictionRepository predictions, MatchCatalog matches, AccountDirectory accounts,
+            Clock clock) {
         this.predictions = predictions;
         this.matches = matches;
+        this.accounts = accounts;
         this.clock = clock;
     }
 
@@ -46,6 +51,10 @@ public class PredictionService implements PredictionLedger, PredictionStatistics
     /** Crea o actualiza la predicción (CA-02.3). Rechaza partidos cerrados (RN-02) con la hora del servidor. */
     @Transactional
     public PredictionView upsert(long userId, long matchId, Score score) {
+        // CA-01.17: un token emitido antes de eliminar la cuenta no puede volver a crear datos.
+        if (!accounts.isActive(userId)) {
+            throw new UnauthorizedException("Tu cuenta fue eliminada.");
+        }
         var match = matches.get(matchId);
         var now = clock.instant();
         if (!match.isPredictionOpen(now)) {

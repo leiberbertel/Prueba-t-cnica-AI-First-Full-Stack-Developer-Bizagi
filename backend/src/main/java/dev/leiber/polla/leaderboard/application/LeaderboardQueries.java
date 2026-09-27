@@ -44,7 +44,7 @@ public class LeaderboardQueries {
                 from users u
                 left join predictions p on p.user_id = u.id
                 left join matches m on m.id = p.match_id
-                where u.role = 'USER'
+                where u.role = 'USER' and u.deleted_at is null
                 group by u.id, u.display_name
             )
             select dense_rank() over (order by points desc, exact_hits desc, outcome_hits desc) as position,
@@ -72,7 +72,9 @@ public class LeaderboardQueries {
                 .param("userId", userId)
                 .query(LeaderboardQueries::mapStanding)
                 .optional();
-        int participants = jdbc.sql("select count(*) from users where role = 'USER'").query(Integer.class).single();
+        int participants = jdbc.sql("select count(*) from users where role = 'USER' and deleted_at is null")
+                .query(Integer.class)
+                .single();
         int pending = jdbc.sql("""
                 select count(*) from matches m
                 where m.status = 'SCHEDULED' and m.kickoff_at > :now
@@ -116,7 +118,7 @@ public class LeaderboardQueries {
     }
 
     private Optional<String> findDisplayName(long userId) {
-        return jdbc.sql("select display_name from users where id = :id")
+        return jdbc.sql("select display_name from users where id = :id and deleted_at is null")
                 .param("id", userId)
                 .query(String.class)
                 .optional();

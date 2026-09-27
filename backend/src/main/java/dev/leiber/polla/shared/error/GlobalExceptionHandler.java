@@ -35,6 +35,7 @@ class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             NotFoundException.class, HttpStatus.NOT_FOUND,
             ConflictException.class, HttpStatus.CONFLICT,
             UnauthorizedException.class, HttpStatus.UNAUTHORIZED,
+            ForbiddenException.class, HttpStatus.FORBIDDEN,
             TooManyRequestsException.class, HttpStatus.TOO_MANY_REQUESTS);
 
     @ExceptionHandler(DomainException.class)
