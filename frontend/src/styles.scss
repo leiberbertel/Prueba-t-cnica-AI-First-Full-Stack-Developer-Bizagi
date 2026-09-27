@@ -1,0 +1,156 @@
+@use '@angular/material' as mat;
+
+// Material 3 con tema propio: verde cancha + dorado trofeo. Claro/oscuro según el sistema.
+html {
+  color-scheme: light dark;
+
+  @include mat.theme((
+    color: (
+      primary: mat.$green-palette,
+      tertiary: mat.$yellow-palette,
+    ),
+    typography: (
+      plain-family: 'Inter, system-ui, sans-serif',
+      brand-family: 'Outfit, Inter, system-ui, sans-serif',
+    ),
+    density: 0,
+  ));
+
+  // Tokens propios de la app (derivados de los del sistema de Material).
+  --app-radius: 16px;
+  --app-gap: 16px;
+  --app-max-width: 1120px;
+  --app-pitch: light-dark(#0b3d2e, #062a20);
+  --app-pitch-contrast: #ffffff;
+  --app-gold: light-dark(#8a6a00, #f2c94c);
+  --app-success: light-dark(#1b6d3a, #7fd99a);
+  --app-success-container: light-dark(#d4f5dd, #123d22);
+  --app-warning: light-dark(#8a5300, #ffb95c);
+  --app-muted: var(--mat-sys-on-surface-variant);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--mat-sys-surface);
+  color: var(--mat-sys-on-surface);
+  font: var(--mat-sys-body-large);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: Outfit, Inter, system-ui, sans-serif;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+a {
+  color: var(--mat-sys-primary);
+}
+
+.material-symbols-rounded {
+  font-family: 'Material Symbols Rounded';
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  display: inline-block;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+}
+
+// Contenedor de página
+.page {
+  width: 100%;
+  max-width: var(--app-max-width);
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+
+  h1 {
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+  }
+
+  p {
+    margin: 4px 0 0;
+    color: var(--app-muted);
+  }
+}
+
+.card {
+  background: var(--mat-sys-surface-container-low);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: var(--app-radius);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+// Puntos obtenidos en una predicción
+.badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  white-space: nowrap;
+
+  &--exact {
+    background: #f2c94c;
+    color: #3a2c00;
+  }
+
+  &--outcome {
+    background: var(--app-success-container);
+    color: var(--app-success);
+  }
+
+  &--miss {
+    background: var(--mat-sys-surface-container-highest);
+    color: var(--app-muted);
+  }
+}
+
+// Banderas (SVG locales de flag-icons, MIT)
+.flag {
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.08);
+  object-fit: cover;
+}
+
+:focus-visible {
+  outline: 3px solid var(--mat-sys-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
