@@ -18,6 +18,7 @@ Angular 21 (zoneless, signals) · Angular Material 3 · Docker · GitHub Actions
 
 - [Funcionalidades](#funcionalidades)
 - [Levantar el proyecto](#levantar-el-proyecto)
+- [Solución de problemas](#solución-de-problemas)
 - [Usuarios de prueba](#usuarios-de-prueba)
 - [Arquitectura](#arquitectura)
 - [Decisiones técnicas](#decisiones-técnicas)
@@ -87,6 +88,15 @@ Abre **http://localhost:4200**.
 | `DEMO_DATA` / `DEMO_PASSWORD` | Crea 4 participantes demo con predicciones | `false` |
 | `COOKIE_SECURE` | Cookie de refresh solo por HTTPS | `true` |
 | `CORS_ALLOWED_ORIGINS` | Solo si el front se sirve en otro origen | vacío |
+
+### Solución de problemas
+
+| Síntoma | Causa | Solución |
+|---|---|---|
+| `http://localhost:4000` no responde después de reiniciar Docker o el PC | Los contenedores quedaron apagados | `docker compose up -d` |
+| El contenedor `web` se cierra con `host not found in upstream "api"` | Se arrancó `web` sola (por ejemplo desde Docker Desktop) sin la API | Arranca siempre el stack completo con `docker compose up -d`: `depends_on` + *healthchecks* esperan a que `db` y `api` estén sanos antes de levantar `web` |
+| `docker compose` pide `JWT_SECRET`, `ADMIN_PASSWORD`… | No existe `.env` | `./scripts/init-env.sh` |
+| Después de reiniciar el backend en modo desarrollo tienes que volver a iniciar sesión | El perfil `local` usa una clave JWT efímera y una base de datos temporal | Comportamiento esperado en desarrollo |
 
 ## Usuarios de prueba
 
