@@ -155,6 +155,7 @@ Cada decisión relevante está registrada como ADR:
 | [0004](specs/adr/0004-estrategia-tokens.md) | JWT en memoria + refresh token en cookie HttpOnly |
 | [0005](specs/adr/0005-contract-first.md) | Contract-first con OpenAPI y cliente Angular generado |
 | [0006](specs/adr/0006-gestion-de-secretos.md) | Secretos en Azure Key Vault + Managed Identity |
+| [0007](specs/adr/0007-eliminacion-asincrona-de-cuentas.md) | Eliminación de cuentas asíncrona, por lotes y con timeouts |
 
 Esquema de base de datos: [`specs/database.md`](specs/database.md) (migraciones en
 `backend/src/main/resources/db/migration`).
@@ -169,6 +170,9 @@ Esquema de base de datos: [`specs/database.md`](specs/database.md) (migraciones 
 - Mensajes de login genéricos y tiempo de respuesta igualado → no permite enumerar emails.
 - Autorización en **dos capas** (URL + `@PreAuthorize`); el front oculta la UI pero la regla vive en el backend.
 - Concurrencia optimista (`@Version`) en resultados; `UNIQUE(user_id, match_id)` en predicciones.
+- **Eliminar mi cuenta** (Ley 1581): exige la contraseña, anonimiza al instante y purga los datos por lotes en segundo
+  plano, con `lock_timeout` y `statement_timeout` para que nada bloquee la base de datos. El admin no se puede eliminar
+  ([ADR-0007](specs/adr/0007-eliminacion-asincrona-de-cuentas.md)).
 - Errores uniformes **RFC 9457** sin *stack traces*; cabeceras CSP, `X-Frame-Options`, `nosniff`.
 - **Sin secretos en el repo.** En Azure viven en **Key Vault** y los Container Apps los leen por referencia con una
   **identidad administrada** ([ADR-0006](specs/adr/0006-gestion-de-secretos.md)). La app **no arranca** sin un
@@ -177,8 +181,8 @@ Esquema de base de datos: [`specs/database.md`](specs/database.md) (migraciones 
 ## Calidad y pruebas
 
 ```bash
-cd backend && ./mvnw verify        # 40 pruebas: unitarias + integración (Postgres real) + módulos + contrato
-cd frontend && npm test            # 16 pruebas (Vitest)
+cd backend && ./mvnw verify        # 49 pruebas: unitarias + integración (Postgres real) + módulos + contrato
+cd frontend && npm test            # 22 pruebas (Vitest)
 ```
 
 | Tipo | Qué cubre |

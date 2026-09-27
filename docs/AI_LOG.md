@@ -163,12 +163,71 @@ Mundial). Así, el resultado se evaluó contra criterios concretos y no "a gusto
 
 ---
 
+## 8 · Criterio humano: "¿y si el usuario tiene un millón de registros?"
+
+**Contexto:** la primera versión de "Eliminar mi cuenta" (HU-01.6) borraba la fila del usuario y dejaba que PostgreSQL
+eliminara predicciones y sesiones con `ON DELETE CASCADE`, en una sola transacción. Pasaba todas las pruebas.
+
+**Mi pregunta al revisar el código:**
+
+```text
+¿Qué pasa si el usuario tiene un millón de registros asociados? ¿La operación no generaría un lock al borrar en
+cascada? ¿Me podrían tumbar la DB?
+```
+
+**Análisis de la IA (verificado contra el modelo de datos):**
+
+- En este dominio las predicciones están **acotadas** (máximo una por partido), **pero** los refresh tokens crecían
+  **sin límite**: cada renovación de sesión creaba una fila y nunca se borraban. Era un problema real que no se había
+  detectado.
+- En general, un `CASCADE` masivo es **una transacción larga**: bloquea cada fila borrada, deja la petición colgada,
+  genera un pico de WAL y trabajo de *vacuum*, y en un servidor B1ms (1 vCPU con créditos) degrada a todos los usuarios.
+- Además, el `CASCADE` **violaba los límites entre módulos**: `auth` terminaba borrando datos de `predictions`, y el
+  comentario del evento prometía un desacople que el diseño no cumplía.
+
+**Decisión (mía):** diseño escalable completo, **con timeouts** para que cualquier operación bloqueada falle rápido en
+lugar de acumular esperas. Registrado en [ADR-0007](../specs/adr/0007-eliminacion-asincrona-de-cuentas.md):
+
+| Pieza | Qué hace |
+|---|---|
+| Fase síncrona (≤ 5 s) | `deleted_at`, **anonimización inmediata** de email y nombre, revocación de sesiones, evento en el outbox → `202 Accepted` |
+| Fase asíncrona | Cada módulo borra **sus propios** datos por lotes: `DELETE … LIMIT n FOR UPDATE SKIP LOCKED`, una transacción corta por lote |
+| Timeouts | Por lote: `lock_timeout` 2 s y `statement_timeout` 10 s. Globales: 5 s y 15 s. Pool: 5 s |
+| Reintentos | Si un lote falla, el evento queda incompleto en el outbox y una tarea programada lo reenvía |
+| Integridad | `CASCADE` → `RESTRICT`: la base de datos impide borrar un usuario con datos pendientes |
+| Limpieza | Purga periódica de refresh tokens vencidos |
+
+**Prueba que demuestra el "fallar rápido":** un test bloquea a propósito la fila del usuario desde otra conexión
+(`SELECT … FOR UPDATE`) y ejecuta la purga. Resultado: **falla en menos de 5 s** en lugar de quedarse esperando, y al
+liberar el bloqueo la purga se completa.
+
+**Pregunta de seguimiento: "¿esto es un soft delete?"** No exactamente. Un soft delete conserva los datos
+indefinidamente y se puede revertir. Aquí la marca `deleted_at` es solo un **estado de tránsito**: los datos personales
+se anonimizan al instante y todo se **borra físicamente** después. Es un *borrado físico diferido*. Un soft delete
+clásico no cumpliría el derecho de supresión de la Ley 1581.
+
+**Dos bugs que aparecieron al verificar:**
+
+1. **Mensajes de error perdidos:** en operaciones sin cuerpo de respuesta, el cliente generado pide la respuesta como
+   texto, así que el Problem Detail llegaba como JSON en un string y la UI mostraba "Algo salió mal" en vez de "La
+   contraseña no es correcta". Lo detectó una prueba del diálogo; se corrigió `problemOf` y se agregaron pruebas.
+2. **Verificación engañosa:** al reiniciar el backend de desarrollo, detener la tarea de Maven **no mató el proceso
+   Java** que había lanzado. El backend viejo siguió respondiendo "UP" en el puerto 8080 y el nuevo no arrancó. Se
+   descubrió al revisar el log (`Port 8080 was already in use`) antes de dar la verificación por buena.
+
+**Aprendizaje:** que las pruebas pasen no significa que el diseño escale. La pregunta "¿qué pasa con un millón de
+registros?" descubrió un crecimiento sin límite y una violación de los límites entre módulos que ninguna prueba
+funcional habría detectado.
+
+---
+
 ## Qué NO delegué a la IA
 
 - **Reglas de negocio y alcance:** la revisión de la spec (RN-09, visibilidad de predicciones ajenas, desempates).
 - **Decisiones de seguridad:** dónde vive cada token y por qué (ADR-0004), y exigir que los secretos salieran del
   repo y del disco (ADR-0006).
 - **Decisiones de plataforma:** mantener Azure en lugar de migrar a otro proveedor cuando aparecieron los bloqueos.
-- **Verificación:** nada se dio por terminado sin evidencia. Suite backend (40 pruebas), frontend (16), prueba manual en
+- **Escalabilidad:** cuestionar el borrado en cascada y exigir procesamiento por lotes con timeouts (ADR-0007).
+- **Verificación:** nada se dio por terminado sin evidencia. Suite backend (49 pruebas), frontend (22), prueba manual en
   navegador, *smoke test* del stack dockerizado con `curl`, y *smoke test* de la URL pública en Azure (login, refresh,
   403 para no-admin, cabeceras de seguridad), leyendo las credenciales del vault sin imprimirlas.
