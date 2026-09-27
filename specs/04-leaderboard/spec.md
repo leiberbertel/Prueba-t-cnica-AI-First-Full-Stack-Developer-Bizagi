@@ -14,7 +14,7 @@
 
 | ID | Dado / Cuando / Entonces |
 |---|---|
-| CA-04.1 | `GET /leaderboard` devuelve a **todos** los usuarios (incluso con 0 puntos) con `position`, `points`, `exactHits`, `outcomeHits`, `scoredPredictions`. |
+| CA-04.1 | `GET /leaderboard` devuelve a **todos** los participantes (rol `USER`, incluso con 0 puntos; RN-09) con `position`, `points`, `exactHits`, `outcomeHits`, `scoredPredictions`. |
 | CA-04.2 | Orden y desempate según RN-07. Usuarios empatados en todos los criterios comparten posición (ranking denso: 1, 2, 2, 3). |
 | CA-04.3 | `GET /users/{id}/predictions` devuelve el historial del usuario con partido, predicción, resultado real y puntos. |
 | CA-04.4 | Si consulto **mi** historial veo todas mis predicciones. Si consulto el de **otro**, solo veo las de partidos cerrados (RN-06). |

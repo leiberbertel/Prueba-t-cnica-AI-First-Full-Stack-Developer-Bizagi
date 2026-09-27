@@ -22,6 +22,7 @@
 | CA-02.6 | Partido inexistente → `404`. |
 | CA-02.7 | Cuando el partido tiene resultado, mi predicción muestra `points` (0, 1 o 3) y el resultado real. |
 | CA-02.8 | Dos requests simultáneos del mismo usuario para el mismo partido no crean duplicados (restricción `UNIQUE(user_id, match_id)`). |
+| CA-02.9 | Un `ADMIN` que intenta predecir → `403` (RN-09). |
 
 ## Regla de puntuación (RN-04)
 

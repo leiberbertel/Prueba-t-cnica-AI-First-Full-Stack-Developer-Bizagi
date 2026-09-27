@@ -51,6 +51,7 @@ sumar puntos según aciertos y ver una tabla de posiciones. Un administrador car
 | RN-06 | Las predicciones de otros usuarios solo son visibles cuando el partido ya cerró (evita copiar). |
 | RN-07 | Ranking ordenado por: puntos ↓, aciertos exactos ↓, aciertos de ganador ↓, nombre ↑. Empates comparten posición. |
 | RN-08 | Nadie puede registrarse como `ADMIN`. El admin se crea por configuración (variables de entorno). |
+| RN-09 | El `ADMIN` no participa: no puede predecir y no aparece en el ranking (conflicto de interés). |
 
 ## Requerimientos no funcionales
 

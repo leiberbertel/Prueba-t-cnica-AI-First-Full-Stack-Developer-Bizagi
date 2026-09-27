@@ -16,7 +16,7 @@
 | Rol | Puede |
 |---|---|
 | `USER` | Ver partidos, crear/editar sus predicciones, ver ranking e historiales. |
-| `ADMIN` | Todo lo de `USER` + registrar/corregir resultados. |
+| `ADMIN` | Ver partidos, ranking e historiales + registrar/corregir resultados. **No participa** en la polla: no predice ni aparece en el ranking (quien carga los resultados no debe competir, por conflicto de interés). |
 
 ## Criterios de aceptación
 
