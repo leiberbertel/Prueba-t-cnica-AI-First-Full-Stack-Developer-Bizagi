@@ -47,14 +47,13 @@ docker compose up -d db                          # Solo Postgres
 docker compose up --build                        # Todo el stack
 
 # Backend (desde backend/)
-./mvnw verify                                    # Tests unitarios + integración (requiere Docker)
-./mvnw spring-boot:run                           # API en :8080
+./mvnw verify                                    # Tests unitarios + integración + módulos + contrato (requiere Docker)
+./mvnw spring-boot:test-run                      # API en :8080 con Postgres en Testcontainers (perfil local)
 
 # Frontend (desde frontend/)
 npm run generate:api                             # Regenera cliente desde specs/api/openapi.yaml
 npm start                                        # :4200 con proxy /api → :8080
 npm test                                         # Vitest
-npm run e2e                                      # Playwright
 ```
 
 ## Qué NO hacer
