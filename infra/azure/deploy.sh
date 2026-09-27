@@ -209,12 +209,14 @@ if ! az containerapp show -n "$WEB_APP" -g "$RG" -o none 2>/dev/null; then
     --registry-server "$REGISTRY" --registry-identity "$IDENTITY_ID" \
     --ingress external --target-port 80 \
     --cpu 0.25 --memory 0.5Gi --min-replicas 1 --max-replicas 2 \
-    --env-vars "API_UPSTREAM=http://$API_APP" -o none
+    --env-vars "API_UPSTREAM=http://$API_APP" "TRUST_EDGE_PROXY=true" -o none
 else
   log "Actualizando $WEB_APP"
   az containerapp identity assign -n "$WEB_APP" -g "$RG" --user-assigned "$IDENTITY_ID" -o none
   az containerapp registry set -n "$WEB_APP" -g "$RG" --server "$REGISTRY" --identity "$IDENTITY_ID" -o none
-  az containerapp update -n "$WEB_APP" -g "$RG" --image "$REGISTRY/polla-web:$TAG" -o none
+  # TRUST_EDGE_PROXY=true: nginx está detrás del borde de Azure (Envoy), que agrega la IP real del cliente.
+  az containerapp update -n "$WEB_APP" -g "$RG" --image "$REGISTRY/polla-web:$TAG" \
+    --set-env-vars "API_UPSTREAM=http://$API_APP" "TRUST_EDGE_PROXY=true" -o none
 fi
 
 URL="https://$(az containerapp show -n "$WEB_APP" -g "$RG" --query properties.configuration.ingress.fqdn -o tsv)"

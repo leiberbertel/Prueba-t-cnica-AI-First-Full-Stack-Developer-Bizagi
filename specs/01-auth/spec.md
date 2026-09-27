@@ -32,7 +32,7 @@
 | CA-01.7 | `POST /auth/refresh` con cookie válida devuelve un nuevo access token y **rota** el refresh token (el anterior queda revocado). **Sin cookie** (nunca se inició sesión) responde `204 No Content`: no tener sesión es un estado normal, no un error. Con cookie inválida, vencida o revocada → `401`. |
 | CA-01.8 | Reutilizar un refresh token revocado → `401` y se revocan **todos** los refresh tokens del usuario (detección de robo). |
 | CA-01.9 | `POST /auth/logout` revoca el refresh token actual y borra la cookie → `204`. |
-| CA-01.10 | Más de 10 intentos de login por IP por minuto → `429 Too Many Requests`. |
+| CA-01.10 | Más de 10 intentos de login por IP por minuto → `429 Too Many Requests`. La IP es la **real** del cliente: un `X-Forwarded-For` escrito por el cliente no permite evadir el límite (la API lee la cadena de derecha a izquierda saltando solo proxies de confianza; nginx descarta el encabezado cuando es el borde). |
 | CA-01.11 | Al arrancar, si no existe un usuario con `ADMIN_EMAIL`, se crea con rol `ADMIN` y `ADMIN_PASSWORD` (variables de entorno). |
 | CA-01.12 | Endpoints protegidos sin token o con token expirado → `401`. Con rol insuficiente → `403`. |
 | CA-01.13 | `DELETE /me` con mi contraseña correcta responde `202 Accepted` y borra la cookie de refresh. **De inmediato:** la cuenta queda marcada como eliminada, el email y el nombre se anonimizan, todas mis sesiones se revocan, no puedo iniciar sesión ni predecir, y el ranking deja de mostrarme. **En segundo plano:** mis predicciones, mis refresh tokens y finalmente la fila de usuario se borran definitivamente, por lotes. |

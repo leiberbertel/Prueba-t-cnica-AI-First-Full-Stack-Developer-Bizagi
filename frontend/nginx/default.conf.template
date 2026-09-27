@@ -1,10 +1,30 @@
-# Plantilla procesada por envsubst al arrancar el contenedor (${PORT}, ${API_UPSTREAM}).
+# Plantilla procesada por envsubst al arrancar el contenedor (${PORT}, ${API_UPSTREAM}, ${TRUST_EDGE_PROXY}).
+
+# IP del cliente hacia la API:
+# - TRUST_EDGE_PROXY=false (defecto, nginx es el borde): se DESCARTA el X-Forwarded-For del cliente y se envía solo la
+#   IP real de la conexión. Un atacante no puede falsificar su IP para evadir el rate limit.
+# - TRUST_EDGE_PROXY=true (Azure: detrás de Envoy): se AGREGA a la cadena que construyó el borde. La API la lee de
+#   derecha a izquierda saltando proxies de confianza, así que usa la IP que agregó el borde, no la del cliente.
+map "${TRUST_EDGE_PROXY}" $client_forwarded_for {
+    "true"  $proxy_add_x_forwarded_for;
+    default $remote_addr;
+}
+
+# Protocolo original: en Azure el borde (Envoy) termina TLS y llega a nginx por HTTP. Se conserva el "https" que
+# informa el borde; si no hay proxy delante (local), se usa el de esta conexión.
+map $http_x_forwarded_proto $forwarded_proto {
+    default $http_x_forwarded_proto;
+    ''      $scheme;
+}
+
 server {
     listen ${PORT};
     server_name _;
     root /usr/share/nginx/html;
 
     # Cabeceras de seguridad
+    # HSTS: el navegador usará solo HTTPS durante un año. Por HTTP (localhost) los navegadores la ignoran.
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-Frame-Options "DENY" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
@@ -20,8 +40,8 @@ server {
         proxy_http_version 1.1;
         proxy_ssl_server_name on;
         proxy_set_header Host $proxy_host;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $client_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $forwarded_proto;
         proxy_read_timeout 30s;
     }
 

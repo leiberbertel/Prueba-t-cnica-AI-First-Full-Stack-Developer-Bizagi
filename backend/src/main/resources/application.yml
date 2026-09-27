@@ -29,7 +29,14 @@ spring:
       completion-mode: update
 
 server:
-  forward-headers-strategy: framework
+  # IP real del cliente detrás de los proxies (Azure Envoy → nginx → API). "native" usa el RemoteIpValve de Tomcat:
+  # lee X-Forwarded-For de DERECHA a IZQUIERDA saltando proxies de confianza (IPs privadas), así que lo que el cliente
+  # escriba a la izquierda se ignora. "framework" tomaría el PRIMER valor, que el cliente controla (rate limit evadible).
+  forward-headers-strategy: native
+  tomcat:
+    remoteip:
+      remote-ip-header: x-forwarded-for
+      protocol-header: x-forwarded-proto
   shutdown: graceful
 
 management:

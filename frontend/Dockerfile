@@ -12,7 +12,8 @@ RUN npm run build
 # así la cookie HttpOnly de refresh es first-party (ADR-0004).
 FROM nginx:1.29-alpine
 ENV PORT=80 \
-    API_UPSTREAM=http://api:8080
+    API_UPSTREAM=http://api:8080 \
+    TRUST_EDGE_PROXY=false
 COPY nginx/default.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
 EXPOSE 80
