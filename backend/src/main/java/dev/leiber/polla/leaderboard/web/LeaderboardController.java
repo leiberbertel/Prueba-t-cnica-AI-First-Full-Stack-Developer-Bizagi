@@ -9,11 +9,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import dev.leiber.polla.leaderboard.internal.LeaderboardQueries;
-import dev.leiber.polla.leaderboard.internal.LeaderboardQueries.History;
-import dev.leiber.polla.leaderboard.internal.LeaderboardQueries.HistoryItem;
-import dev.leiber.polla.leaderboard.internal.LeaderboardQueries.Standing;
-import dev.leiber.polla.leaderboard.internal.LeaderboardQueries.Summary;
+import dev.leiber.polla.leaderboard.application.LeaderboardQueries;
+import dev.leiber.polla.leaderboard.application.LeaderboardQueries.History;
+import dev.leiber.polla.leaderboard.application.LeaderboardQueries.HistoryItem;
+import dev.leiber.polla.leaderboard.application.LeaderboardQueries.Standing;
+import dev.leiber.polla.leaderboard.application.LeaderboardQueries.Summary;
 import dev.leiber.polla.shared.security.CurrentUser;
 
 @RestController

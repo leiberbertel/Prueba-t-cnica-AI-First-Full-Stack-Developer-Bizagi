@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import dev.leiber.polla.auth.internal.AuthService;
-import dev.leiber.polla.auth.internal.AuthService.AuthResult;
-import dev.leiber.polla.auth.internal.LoginRateLimiter;
+import dev.leiber.polla.auth.application.AuthService;
+import dev.leiber.polla.auth.application.AuthService.AuthResult;
+import dev.leiber.polla.auth.application.LoginRateLimiter;
 import dev.leiber.polla.auth.web.AuthDtos.AuthResponse;
 import dev.leiber.polla.auth.web.AuthDtos.LoginRequest;
 import dev.leiber.polla.auth.web.AuthDtos.RegisterRequest;

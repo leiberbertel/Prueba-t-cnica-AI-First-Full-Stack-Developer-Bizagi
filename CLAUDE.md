@@ -22,8 +22,13 @@ docs/             Arquitectura (C4), AI_LOG, material de presentación
 
 ## Convenciones backend
 
-- Paquete por **módulo** (`users`, `auth`, `matches`, `predictions`, `scoring`, `leaderboard`, `shared`).
-  Lo que no es API pública del módulo va en `<modulo>.internal`. `ModularityTests` debe pasar.
+- Paquete por **módulo** (`auth`, `matches`, `predictions`, `scoring`, `leaderboard`, `demo`, `shared`).
+  El paquete raíz del módulo es su **API pública** (interfaces, eventos, vistas). Dentro, capas fijas:
+  - `domain/` → entidades y reglas de negocio (sin lógica de framework cuando sea posible).
+  - `application/` → casos de uso (servicios, listeners de eventos, consultas de lectura).
+  - `infrastructure/` → repositorios, `@Configuration`, `@ConfigurationProperties`, seeders.
+  - `web/` → controllers y DTOs.
+  Los subpaquetes son internos para Spring Modulith: otros módulos solo usan el paquete raíz. `ModularityTests` debe pasar.
 - Módulos se comunican por **eventos de dominio** (p. ej. `MatchResultRegistered`), no por llamadas a internos.
 - DTOs como `record`. Validación con Jakarta Validation en el borde (controllers).
 - Errores: lanzar excepciones de dominio de `shared.error`; `GlobalExceptionHandler` las traduce a RFC 9457.

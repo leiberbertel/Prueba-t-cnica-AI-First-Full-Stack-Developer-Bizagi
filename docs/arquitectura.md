@@ -61,7 +61,8 @@ flowchart TB
 
 Reglas (verificadas por `ModularityTests`):
 
-- Cada módulo expone solo su paquete raíz (API). `internal` y `web` son privados.
+- Cada módulo expone solo su paquete raíz (API). Sus capas internas (`domain`, `application`, `infrastructure`,
+  `web`) son privadas para los demás módulos.
 - **Sin ciclos:** `matches` necesita el conteo de predicciones, pero en vez de depender de `predictions` define un puerto
   (`PredictionStatistics`) que `predictions` implementa (inversión de dependencias).
 - `matches` **no conoce** a `scoring`: se comunican por un evento.

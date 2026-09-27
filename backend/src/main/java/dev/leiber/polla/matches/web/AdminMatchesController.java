@@ -17,7 +17,7 @@ import dev.leiber.polla.matches.MatchStatus;
 import dev.leiber.polla.matches.MatchView;
 import dev.leiber.polla.matches.PredictionStatistics;
 import dev.leiber.polla.matches.Score;
-import dev.leiber.polla.matches.internal.MatchService;
+import dev.leiber.polla.matches.application.MatchService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;

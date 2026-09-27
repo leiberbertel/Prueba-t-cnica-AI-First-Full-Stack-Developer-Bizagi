@@ -1,6 +1,6 @@
 package dev.leiber.polla.auth.web;
 
-import dev.leiber.polla.auth.internal.UserAccount;
+import dev.leiber.polla.auth.domain.UserAccount;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
