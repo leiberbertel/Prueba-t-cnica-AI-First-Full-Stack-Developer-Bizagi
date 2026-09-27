@@ -221,6 +221,34 @@ funcional habría detectado.
 
 ---
 
+## 9 · Auditoría de configuración de producción: IP falsificable en el rate limit
+
+**Mi pregunta:** al ver `COOKIE_SECURE: false` en `docker-compose.yml` pregunté si había más configuraciones que
+debían cambiar en producción.
+
+**Hallazgo de la IA:** `COOKIE_SECURE` estaba bien (el compose es solo local), pero encontró una vulnerabilidad real.
+Con `forward-headers-strategy: framework`, Spring tomaba el **primer** valor de `X-Forwarded-For`, que escribe el
+cliente. Mandando una IP falsa distinta en cada intento, un atacante podía **evadir el límite de 10 logins por minuto**.
+También faltaba HSTS.
+
+**Cómo se verificó (antes de corregir):** un test sobre un **servidor real** (MockMvc no pasa por Tomcat) simula al
+atacante. Con la configuración anterior, el intento 11 obtuvo `401` en vez de `429`: la vulnerabilidad quedó
+demostrada con evidencia, no supuesta.
+
+**Corrección:**
+
+| Capa | Cambio |
+|---|---|
+| API | `forward-headers-strategy: native` → `RemoteIpValve` de Tomcat lee la cadena de **derecha a izquierda** saltando proxies de confianza. La IP la aporta el borde, no el cliente |
+| nginx | Variable `TRUST_EDGE_PROXY`. Si nginx es el borde (local, valor por defecto), **descarta** el encabezado del cliente. Detrás de Azure (Envoy), agrega a la cadena del borde |
+| nginx | Se conserva el `https` original en `X-Forwarded-Proto`, y se agrega HSTS |
+
+**Un detalle que la primera corrección no cubría:** en Docker local el ataque **seguía funcionando**, porque la IP del
+navegador llega como IP privada de Docker y la API la tomaba por un proxy propio. Por eso nginx necesita saber si es el
+borde (`TRUST_EDGE_PROXY`). Después del ajuste, el ataque vía nginx local recibe `429` en el intento 11.
+
+---
+
 ## Qué NO delegué a la IA
 
 - **Reglas de negocio y alcance:** la revisión de la spec (RN-09, visibilidad de predicciones ajenas, desempates).

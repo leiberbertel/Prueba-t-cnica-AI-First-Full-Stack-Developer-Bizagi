@@ -166,7 +166,9 @@ Esquema de base de datos: [`specs/database.md`](specs/database.md) (migraciones 
 - **Access token** JWT de 15 min guardado solo en memoria (no en `localStorage`) → sin exfiltración persistente por XSS.
 - **Refresh token** opaco en cookie `HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth`, guardado **hasheado**,
   **rotado** en cada uso y con **detección de reutilización** (revoca todas las sesiones).
-- **Rate limiting** de login por IP (10/min) → `429` con `Retry-After`.
+- **Rate limiting** de login por IP (10/min) → `429` con `Retry-After`, con la IP **real** del cliente: falsificar
+  `X-Forwarded-For` no evade el límite (probado con un test sobre servidor real).
+- **HSTS** (`Strict-Transport-Security`): el navegador usa solo HTTPS con el dominio durante un año.
 - Mensajes de login genéricos y tiempo de respuesta igualado → no permite enumerar emails.
 - Autorización en **dos capas** (URL + `@PreAuthorize`); el front oculta la UI pero la regla vive en el backend.
 - Concurrencia optimista (`@Version`) en resultados; `UNIQUE(user_id, match_id)` en predicciones.
