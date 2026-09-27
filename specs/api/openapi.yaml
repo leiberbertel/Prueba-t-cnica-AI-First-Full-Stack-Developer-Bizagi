@@ -1,0 +1,478 @@
+openapi: 3.0.3
+info:
+  title: Polla Mundialista API
+  version: 1.0.0
+  description: |
+    Contrato HTTP entre el frontend (Angular) y el backend (Spring Boot).
+    **Fuente de verdad** (Spec-Driven Development): el cliente Angular se genera a partir de este archivo
+    y el backend lo valida con pruebas de contrato.
+
+    - Autenticación: `Authorization: Bearer <accessToken>` (JWT, 15 min).
+    - Refresh token: cookie `HttpOnly` `refresh_token`, `Path=/api/v1/auth`.
+    - Errores: RFC 9457 `application/problem+json`.
+servers:
+  - url: /api/v1
+tags:
+  - name: Auth
+  - name: Matches
+  - name: Predictions
+  - name: Admin
+  - name: Leaderboard
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      operationId: register
+      summary: Registrar un nuevo usuario (rol USER)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '201':
+          description: Usuario creado y autenticado. Incluye cookie de refresh.
+          headers:
+            Set-Cookie: { $ref: '#/components/headers/RefreshCookie' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      operationId: login
+      summary: Iniciar sesión
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Autenticado. Incluye cookie de refresh.
+          headers:
+            Set-Cookie: { $ref: '#/components/headers/RefreshCookie' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      operationId: refresh
+      summary: Renovar el access token usando la cookie de refresh (rota el refresh token)
+      security: []
+      responses:
+        '200':
+          description: Nuevo access token. La cookie de refresh se rota.
+          headers:
+            Set-Cookie: { $ref: '#/components/headers/RefreshCookie' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      operationId: logout
+      summary: Cerrar sesión (revoca el refresh token y borra la cookie)
+      security: []
+      responses:
+        '204':
+          description: Sesión cerrada.
+
+  /me:
+    get:
+      tags: [Auth]
+      operationId: getCurrentUser
+      summary: Usuario autenticado
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /me/summary:
+    get:
+      tags: [Leaderboard]
+      operationId: getMySummary
+      summary: Resumen personal (puntos, posición, pendientes)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/MySummary' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /matches:
+    get:
+      tags: [Matches]
+      operationId: listMatches
+      summary: Listar los partidos con la predicción del usuario autenticado
+      responses:
+        '200':
+          description: Partidos ordenados por fecha de inicio.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Match' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /matches/{matchId}/prediction:
+    parameters:
+      - $ref: '#/components/parameters/MatchId'
+    put:
+      tags: [Predictions]
+      operationId: upsertPrediction
+      summary: Crear o actualizar mi predicción para un partido abierto
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Score' }
+      responses:
+        '200':
+          description: Predicción guardada.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Prediction' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /admin/matches:
+    get:
+      tags: [Admin]
+      operationId: listMatchesForAdmin
+      summary: Listar partidos con el número de predicciones (solo ADMIN)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/AdminMatch' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /admin/matches/{matchId}/result:
+    parameters:
+      - $ref: '#/components/parameters/MatchId'
+    put:
+      tags: [Admin]
+      operationId: registerResult
+      summary: Registrar o corregir el resultado final de un partido (solo ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterResultRequest' }
+      responses:
+        '200':
+          description: Resultado registrado. Los puntos se recalculan.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminMatch' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  /leaderboard:
+    get:
+      tags: [Leaderboard]
+      operationId: getLeaderboard
+      summary: Tabla de posiciones global
+      responses:
+        '200':
+          description: Ranking ordenado (RN-07).
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/LeaderboardEntry' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /users/{userId}/predictions:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      tags: [Leaderboard]
+      operationId: getUserPredictionHistory
+      summary: Historial de predicciones de un usuario (de otros, solo partidos cerrados)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PredictionHistory' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    MatchId:
+      name: matchId
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+
+  headers:
+    RefreshCookie:
+      description: '`refresh_token=<opaque>; HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth; Max-Age=604800`'
+      schema: { type: string }
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [email, displayName, password]
+      properties:
+        email: { type: string, format: email, maxLength: 254, example: ana@example.com }
+        displayName: { type: string, minLength: 2, maxLength: 40, example: Ana }
+        password:
+          type: string
+          minLength: 8
+          maxLength: 72
+          description: Al menos una letra y un número.
+          example: Secreta123
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, example: ana@example.com }
+        password: { type: string, example: Secreta123 }
+
+    AuthResponse:
+      type: object
+      required: [accessToken, expiresIn, user]
+      properties:
+        accessToken: { type: string }
+        expiresIn: { type: integer, description: Segundos de vida del access token, example: 900 }
+        user: { $ref: '#/components/schemas/User' }
+
+    Role:
+      type: string
+      enum: [USER, ADMIN]
+
+    User:
+      type: object
+      required: [id, email, displayName, role]
+      properties:
+        id: { type: integer, format: int64 }
+        email: { type: string }
+        displayName: { type: string }
+        role: { $ref: '#/components/schemas/Role' }
+
+    Team:
+      type: object
+      required: [code, name, flagCode]
+      properties:
+        code: { type: string, example: COL }
+        name: { type: string, example: Colombia }
+        flagCode: { type: string, description: 'ISO 3166-1 alpha-2 en minúsculas', example: co }
+
+    MatchStatus:
+      type: string
+      enum: [SCHEDULED, FINISHED]
+
+    Score:
+      type: object
+      required: [homeGoals, awayGoals]
+      properties:
+        homeGoals: { type: integer, minimum: 0, maximum: 20 }
+        awayGoals: { type: integer, minimum: 0, maximum: 20 }
+
+    RegisterResultRequest:
+      allOf:
+        - $ref: '#/components/schemas/Score'
+        - type: object
+          properties:
+            version:
+              type: integer
+              format: int64
+              description: Versión del partido leída por el admin (concurrencia optimista). Opcional.
+
+    Prediction:
+      type: object
+      required: [matchId, homeGoals, awayGoals]
+      properties:
+        matchId: { type: integer, format: int64 }
+        homeGoals: { type: integer }
+        awayGoals: { type: integer }
+        points:
+          type: integer
+          nullable: true
+          description: Null mientras el partido no tenga resultado.
+        updatedAt: { type: string, format: date-time }
+
+    Match:
+      type: object
+      required: [id, group, matchday, homeTeam, awayTeam, kickoffAt, status, predictionOpen]
+      properties:
+        id: { type: integer, format: int64 }
+        group: { type: string, example: A }
+        matchday: { type: integer, example: 1 }
+        homeTeam: { $ref: '#/components/schemas/Team' }
+        awayTeam: { $ref: '#/components/schemas/Team' }
+        kickoffAt: { type: string, format: date-time }
+        venue: { type: string, nullable: true }
+        status: { $ref: '#/components/schemas/MatchStatus' }
+        result:
+          allOf: [{ $ref: '#/components/schemas/Score' }]
+          nullable: true
+        predictionOpen: { type: boolean }
+        myPrediction:
+          allOf: [{ $ref: '#/components/schemas/Prediction' }]
+          nullable: true
+
+    AdminMatch:
+      type: object
+      required: [id, group, matchday, homeTeam, awayTeam, kickoffAt, status, predictionsCount, version]
+      properties:
+        id: { type: integer, format: int64 }
+        group: { type: string }
+        matchday: { type: integer }
+        homeTeam: { $ref: '#/components/schemas/Team' }
+        awayTeam: { $ref: '#/components/schemas/Team' }
+        kickoffAt: { type: string, format: date-time }
+        status: { $ref: '#/components/schemas/MatchStatus' }
+        result:
+          allOf: [{ $ref: '#/components/schemas/Score' }]
+          nullable: true
+        resultRegisteredAt: { type: string, format: date-time, nullable: true }
+        predictionsCount: { type: integer }
+        version: { type: integer, format: int64 }
+
+    LeaderboardEntry:
+      type: object
+      required: [position, userId, displayName, points, exactHits, outcomeHits, scoredPredictions]
+      properties:
+        position: { type: integer }
+        userId: { type: integer, format: int64 }
+        displayName: { type: string }
+        points: { type: integer }
+        exactHits: { type: integer }
+        outcomeHits: { type: integer }
+        scoredPredictions: { type: integer }
+
+    MySummary:
+      type: object
+      required: [points, position, exactHits, outcomeHits, pendingPredictions, totalParticipants]
+      properties:
+        points: { type: integer }
+        position: { type: integer }
+        exactHits: { type: integer }
+        outcomeHits: { type: integer }
+        pendingPredictions:
+          type: integer
+          description: Partidos abiertos sin predicción del usuario.
+        totalParticipants: { type: integer }
+
+    PredictionHistoryItem:
+      type: object
+      required: [matchId, group, homeTeam, awayTeam, kickoffAt, status, prediction]
+      properties:
+        matchId: { type: integer, format: int64 }
+        group: { type: string }
+        homeTeam: { $ref: '#/components/schemas/Team' }
+        awayTeam: { $ref: '#/components/schemas/Team' }
+        kickoffAt: { type: string, format: date-time }
+        status: { $ref: '#/components/schemas/MatchStatus' }
+        result:
+          allOf: [{ $ref: '#/components/schemas/Score' }]
+          nullable: true
+        prediction: { $ref: '#/components/schemas/Score' }
+        points: { type: integer, nullable: true }
+
+    PredictionHistory:
+      type: object
+      required: [user, items]
+      properties:
+        user:
+          type: object
+          required: [id, displayName]
+          properties:
+            id: { type: integer, format: int64 }
+            displayName: { type: string }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/PredictionHistoryItem' }
+
+    ProblemDetail:
+      type: object
+      description: RFC 9457
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+        errors:
+          type: array
+          description: Errores de validación por campo (solo en 400).
+          items:
+            type: object
+            properties:
+              field: { type: string }
+              message: { type: string }
+
+  responses:
+    ValidationError:
+      description: Datos inválidos
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+    Unauthorized:
+      description: No autenticado o credenciales inválidas
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+    Forbidden:
+      description: Rol insuficiente
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+    NotFound:
+      description: Recurso no encontrado
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+    Conflict:
+      description: Conflicto de estado (email duplicado, predicción cerrada, versión desactualizada)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
+    TooManyRequests:
+      description: Demasiados intentos
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetail' }
