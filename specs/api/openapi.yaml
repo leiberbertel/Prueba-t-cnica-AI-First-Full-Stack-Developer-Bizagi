@@ -74,6 +74,8 @@ paths:
       summary: Renovar el access token usando la cookie de refresh (rota el refresh token)
       security: []
       responses:
+        '204':
+          description: No hay cookie de refresh (el visitante nunca inició sesión). No es un error.
         '200':
           description: Nuevo access token. La cookie de refresh se rota.
           headers:
@@ -105,6 +107,35 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/User' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+    delete:
+      tags: [Auth]
+      operationId: deleteMyAccount
+      summary: Eliminar mi cuenta y todos mis datos (requiere mi contraseña; el admin no puede eliminarse)
+      description: |
+        Fase síncrona: marca la cuenta como eliminada, anonimiza los datos personales y revoca las sesiones.
+        Fase asíncrona: las predicciones, los tokens y la cuenta se borran por lotes (ADR-0007).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DeleteAccountRequest' }
+      responses:
+        '202':
+          description: Eliminación aceptada. Datos personales ya anonimizados; los demás datos se purgan en segundo plano. Se borra la cookie de refresh.
+          headers:
+            Set-Cookie: { $ref: '#/components/headers/RefreshCookie' }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403':
+          description: Contraseña incorrecta (`invalid-password`)
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
+        '409':
+          description: La cuenta admin no se puede eliminar (`admin-cannot-be-deleted`)
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/ProblemDetail' }
 
   /me/summary:
     get:
@@ -271,6 +302,12 @@ components:
       properties:
         email: { type: string, format: email, example: ana@example.com }
         password: { type: string, example: Secreta123 }
+
+    DeleteAccountRequest:
+      type: object
+      required: [password]
+      properties:
+        password: { type: string, description: Contraseña actual (re-autenticación) }
 
     AuthResponse:
       type: object

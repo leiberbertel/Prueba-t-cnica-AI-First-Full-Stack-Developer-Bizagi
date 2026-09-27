@@ -18,7 +18,7 @@
 | CA-04.2 | Orden y desempate según RN-07. Usuarios empatados en todos los criterios comparten posición (ranking denso: 1, 2, 2, 3). |
 | CA-04.3 | `GET /users/{id}/predictions` devuelve el historial del usuario con partido, predicción, resultado real y puntos. |
 | CA-04.4 | Si consulto **mi** historial veo todas mis predicciones. Si consulto el de **otro**, solo veo las de partidos cerrados (RN-06). |
-| CA-04.5 | Usuario inexistente → `404`. |
+| CA-04.5 | Usuario inexistente o con la cuenta eliminada → `404`. Las cuentas eliminadas desaparecen del ranking **de inmediato**, aunque sus datos aún se estén purgando. |
 | CA-04.6 | El ranking refleja un resultado nuevo o corregido inmediatamente después del recálculo. |
 | CA-04.7 | `GET /me/summary` devuelve mis puntos, posición, exactos y número de partidos abiertos sin predicción. |
 

@@ -1,6 +1,6 @@
 # 01 · Autenticación y usuarios
 
-**Módulo backend:** `auth` (+ `users`) · **Feature frontend:** `features/auth`
+**Módulo backend:** `auth` · **Feature frontend:** `features/auth`
 **Contrato:** tag `Auth` en [`openapi.yaml`](../api/openapi.yaml)
 
 ## Historias de usuario
@@ -10,6 +10,7 @@
 - **HU-01.3** Como usuario quiero que mi **sesión se mantenga** al recargar la página sin volver a escribir la contraseña.
 - **HU-01.4** Como usuario quiero **cerrar sesión** de forma segura.
 - **HU-01.5** Como admin quiero que mi cuenta exista desde el despliegue, sin depender del registro público.
+- **HU-01.6** Como participante quiero **eliminar mi cuenta y todos mis datos** (derecho de supresión, Ley 1581 de 2012).
 
 ## Roles
 
@@ -28,12 +29,19 @@
 | CA-01.4 | Nombre visible: 2–40 caracteres. Email válido, máximo 254. |
 | CA-01.5 | Dadas credenciales inválidas, cuando hago login, entonces recibo `401` con mensaje **genérico** (no revela si el email existe). |
 | CA-01.6 | Login y registro devuelven un **access token** (JWT, 15 min) en el body y un **refresh token** en cookie `HttpOnly; Secure; SameSite=Strict; Path=/api/v1/auth`. |
-| CA-01.7 | `POST /auth/refresh` con cookie válida devuelve un nuevo access token y **rota** el refresh token (el anterior queda revocado). |
+| CA-01.7 | `POST /auth/refresh` con cookie válida devuelve un nuevo access token y **rota** el refresh token (el anterior queda revocado). **Sin cookie** (nunca se inició sesión) responde `204 No Content`: no tener sesión es un estado normal, no un error. Con cookie inválida, vencida o revocada → `401`. |
 | CA-01.8 | Reutilizar un refresh token revocado → `401` y se revocan **todos** los refresh tokens del usuario (detección de robo). |
 | CA-01.9 | `POST /auth/logout` revoca el refresh token actual y borra la cookie → `204`. |
 | CA-01.10 | Más de 10 intentos de login por IP por minuto → `429 Too Many Requests`. |
 | CA-01.11 | Al arrancar, si no existe un usuario con `ADMIN_EMAIL`, se crea con rol `ADMIN` y `ADMIN_PASSWORD` (variables de entorno). |
 | CA-01.12 | Endpoints protegidos sin token o con token expirado → `401`. Con rol insuficiente → `403`. |
+| CA-01.13 | `DELETE /me` con mi contraseña correcta responde `202 Accepted` y borra la cookie de refresh. **De inmediato:** la cuenta queda marcada como eliminada, el email y el nombre se anonimizan, todas mis sesiones se revocan, no puedo iniciar sesión ni predecir, y el ranking deja de mostrarme. **En segundo plano:** mis predicciones, mis refresh tokens y finalmente la fila de usuario se borran definitivamente, por lotes. |
+| CA-01.14 | Con contraseña incorrecta → `403` (`invalid-password`) y la cuenta queda intacta. Se usa 403 y no 401 porque la sesión es válida: falla la re-autenticación. |
+| CA-01.15 | La cuenta `ADMIN` no se puede eliminar → `409` (`admin-cannot-be-deleted`) (RN-10). |
+| CA-01.16 | Tras eliminar la cuenta, el mismo email puede registrarse **de inmediato** como una cuenta nueva y vacía (el email anterior ya fue anonimizado). |
+| CA-01.17 | Un access token emitido antes de eliminar la cuenta (vigente hasta 15 min) ya no permite crear ni modificar predicciones → `401`. |
+| CA-01.18 | La purga nunca bloquea la base de datos: cada lote tiene `lock_timeout` y `statement_timeout`. Si un lote falla por timeout, se reintenta después sin perder la solicitud (ADR-0007). |
+| CA-01.19 | Los refresh tokens vencidos se purgan periódicamente, por lotes (la tabla no crece sin límite). |
 
 ## Diseño
 
@@ -48,7 +56,8 @@
 
 ### Flujo de sesión en el frontend
 
-1. Al iniciar la app se llama `POST /auth/refresh`. Si responde 200, la sesión se restaura (HU-01.3).
+1. Al iniciar la app se llama `POST /auth/refresh`. Si responde 200, la sesión se restaura (HU-01.3); si responde 204,
+   no hay sesión y la app sigue como visitante sin registrar ningún error.
 2. Un interceptor funcional agrega `Authorization: Bearer <token>` a cada request de la API.
 3. Ante un `401`, el interceptor intenta **un** refresh (compartido entre requests concurrentes) y reintenta; si falla, va a `/login`.
 
@@ -58,6 +67,21 @@
 users(id, email UNIQUE(lower), display_name, password_hash, role, created_at)
 refresh_tokens(id, user_id FK, token_hash UNIQUE, expires_at, revoked_at, created_at)
 ```
+
+### Eliminación de cuenta (HU-01.6)
+
+Diseño completo en [ADR-0007](../adr/0007-eliminacion-asincrona-de-cuentas.md). Resumen:
+
+- **Re-autenticación:** se exige la contraseña aunque haya sesión. Un access token robado (15 min) no basta.
+- **Borrado en dos fases:**
+  1. *Síncrona y corta* (máx. 5 s): `deleted_at`, anonimización de datos personales, revocación de sesiones, evento
+     `UserAccountDeleted` en el outbox. Responde `202`. Cumple el derecho de supresión **al instante**: ya no quedan
+     datos que identifiquen a la persona.
+  2. *Asíncrona y por lotes:* cada módulo borra **sus propios** datos (`predictions`, `auth`) en transacciones cortas
+     con timeouts. Una tarea programada borra la fila del usuario cuando ya no tiene datos: la FK `RESTRICT` lo impide
+     mientras queden predicciones.
+- **Frontend:** opción "Eliminar mi cuenta" en el menú de usuario (oculta para el admin). Diálogo que explica qué se
+  borra, pide la contraseña y escribir `ELIMINAR` **exactamente, en mayúsculas**. Al terminar se cierra la sesión y se muestra un aviso en el login.
 
 ## Casos borde
 
