@@ -1,0 +1,12 @@
+# Perfil para desarrollo local. NUNCA usar estos valores en producción.
+app:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:bG9jYWwtZGV2LW9ubHktc2VjcmV0LWRvLW5vdC11c2UtaW4tcHJvZHVjdGlvbiEh}
+    refresh-token:
+      cookie-secure: ${COOKIE_SECURE:false}
+  admin:
+    email: ${ADMIN_EMAIL:admin@polla.local}
+    password: ${ADMIN_PASSWORD:Admin12345}
+  demo:
+    enabled: ${DEMO_DATA:true}

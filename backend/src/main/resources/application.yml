@@ -1,0 +1,77 @@
+spring:
+  application:
+    name: polla
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/polla}
+    username: ${DB_USERNAME:polla}
+    password: ${DB_PASSWORD:polla}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  modulith:
+    events:
+      jdbc:
+        schema-initialization:
+          enabled: true
+      republish-outstanding-events-on-restart: true
+      completion-mode: update
+
+server:
+  forward-headers-strategy: framework
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,modulith
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+springdoc:
+  swagger-ui:
+    # Swagger UI muestra el contrato escrito a mano (fuente de verdad, ADR-0005)
+    url: /openapi.yaml
+    path: /swagger-ui.html
+
+app:
+  security:
+    jwt:
+      # Secreto HS256 codificado en Base64 (mínimo 32 bytes). Obligatorio fuera del perfil local.
+      secret: ${JWT_SECRET:}
+      issuer: polla-mundialista
+      access-token-ttl: 15m
+    refresh-token:
+      ttl: 7d
+      cookie-name: refresh_token
+      cookie-path: /api/v1/auth
+      cookie-secure: ${COOKIE_SECURE:true}
+    login-rate-limit:
+      max-attempts: 10
+      window: 1m
+    cors:
+      # Vacío = mismo origen (front servido detrás de un proxy /api). Separar por comas si se necesita.
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:}
+  admin:
+    email: ${ADMIN_EMAIL:}
+    password: ${ADMIN_PASSWORD:}
+    display-name: ${ADMIN_DISPLAY_NAME:Administrador}
+  demo:
+    # Participantes demo con predicciones (nunca resultados). Útil para la presentación.
+    enabled: ${DEMO_DATA:false}
+    password: ${DEMO_PASSWORD:Usuario123}
+  scoring:
+    exact-points: 3
+    outcome-points: 1
+
+logging:
+  level:
+    org.springframework.modulith.events: info
