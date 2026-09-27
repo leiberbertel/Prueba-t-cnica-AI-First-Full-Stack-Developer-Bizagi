@@ -1,0 +1,49 @@
+# Plantilla procesada por envsubst al arrancar el contenedor (${PORT}, ${API_UPSTREAM}).
+server {
+    listen ${PORT};
+    server_name _;
+    root /usr/share/nginx/html;
+
+    # Cabeceras de seguridad
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=()" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'" always;
+
+    gzip on;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+
+    # API → backend (mismo origen para el navegador)
+    location /api/ {
+        proxy_pass ${API_UPSTREAM};
+        proxy_http_version 1.1;
+        proxy_ssl_server_name on;
+        proxy_set_header Host $proxy_host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 30s;
+    }
+
+    # Swagger UI y contrato OpenAPI del backend
+    location ~ ^/(swagger-ui|swagger-ui\.html|openapi\.yaml|v3/api-docs) {
+        proxy_pass ${API_UPSTREAM};
+        proxy_ssl_server_name on;
+        proxy_set_header Host $proxy_host;
+    }
+
+    # Ojo: ningún location usa add_header; si lo hiciera, dejaría de heredar las cabeceras de seguridad.
+    # La caché se controla con `expires`.
+
+    # Assets con hash: caché larga
+    location ~* \.(?:js|css|woff2?|svg|png|jpg|webp|ico)$ {
+        expires 1y;
+        try_files $uri =404;
+    }
+
+    # SPA: cualquier otra ruta sirve index.html (sin caché, para tomar siempre la última versión)
+    location / {
+        expires -1;
+        try_files $uri $uri/ /index.html;
+    }
+}
