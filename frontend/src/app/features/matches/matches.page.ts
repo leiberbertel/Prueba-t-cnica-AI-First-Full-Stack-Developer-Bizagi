@@ -1,4 +1,3 @@
-import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -16,14 +15,9 @@ import { MatchCard } from './match-card';
 
 type Filter = 'all' | 'pending' | 'A' | 'B';
 
-interface DayGroup {
-  day: string;
-  matches: Match[];
-}
-
 @Component({
   selector: 'app-matches-page',
-  imports: [DatePipe, RouterLink, MatButtonToggleModule, MatProgressBarModule, Icon, MatchCard],
+  imports: [RouterLink, MatButtonToggleModule, MatProgressBarModule, Icon, MatchCard],
   templateUrl: './matches.page.html',
   styleUrl: './matches.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -44,9 +38,10 @@ export class MatchesPage {
     return error ? problemMessage(error) : null;
   });
 
-  protected readonly days = computed<DayGroup[]>(() => {
+  /** Partidos del filtro activo, en orden cronológico (cada tarjeta muestra su fecha). */
+  protected readonly visibleMatches = computed<Match[]>(() => {
     const filter = this.filter();
-    const visible = (this.matches.value() ?? []).filter((match) => {
+    return (this.matches.value() ?? []).filter((match) => {
       switch (filter) {
         case 'pending':
           return match.predictionOpen && !match.myPrediction;
@@ -57,12 +52,6 @@ export class MatchesPage {
           return true;
       }
     });
-    const groups = new Map<string, Match[]>();
-    for (const match of visible) {
-      const day = new Date(match.kickoffAt).toLocaleDateString('en-CA'); // YYYY-MM-DD en hora local
-      groups.set(day, [...(groups.get(day) ?? []), match]);
-    }
-    return [...groups].map(([day, matches]) => ({ day, matches }));
   });
 
   protected onSaved(saved: Prediction): void {

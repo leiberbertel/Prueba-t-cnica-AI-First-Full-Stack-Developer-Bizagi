@@ -58,28 +58,28 @@
   flex-wrap: wrap;
 }
 
-.day {
+// Grilla continua: 3 columnas en escritorio, 2 en tablet, 1 en móvil
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--app-gap);
   margin-top: 24px;
+}
 
-  h2 {
-    margin-bottom: 12px;
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--app-muted);
-
-    &::first-letter {
-      text-transform: uppercase;
-    }
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
-  gap: var(--app-gap);
+@media (max-width: 680px) {
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .empty {
+  grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
   align-items: center;

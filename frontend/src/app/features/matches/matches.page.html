@@ -53,22 +53,17 @@
       <button type="button" class="link" (click)="matches.reload()">Reintentar</button>
     </div>
   } @else {
-    @for (group of days(); track group.day) {
-      <section class="day" [attr.aria-labelledby]="'day-' + group.day">
-        <h2 [id]="'day-' + group.day">{{ group.matches[0].kickoffAt | date: 'EEEE d \'de\' MMMM' }}</h2>
-        <div class="grid">
-          @for (match of group.matches; track match.id) {
-            <app-match-card [match]="match" [canPredict]="!auth.isAdmin()"
-                            (saved)="onSaved($event)" (closedByServer)="matches.reload()" />
-          }
+    <div class="grid" aria-label="Partidos">
+      @for (match of visibleMatches(); track match.id) {
+        <app-match-card [match]="match" [canPredict]="!auth.isAdmin()"
+                        (saved)="onSaved($event)" (closedByServer)="matches.reload()" />
+      } @empty {
+        <div class="empty">
+          <app-icon name="celebration" [size]="40" />
+          <p>¡Todo al día! No tienes partidos pendientes por predecir.</p>
+          <button type="button" class="link" (click)="filter.set('all')">Ver todos los partidos</button>
         </div>
-      </section>
-    } @empty {
-      <div class="empty">
-        <app-icon name="celebration" [size]="40" />
-        <p>¡Todo al día! No tienes partidos pendientes por predecir.</p>
-        <button type="button" class="link" (click)="filter.set('all')">Ver todos los partidos</button>
-      </div>
-    }
+      }
+    </div>
   }
 </div>
