@@ -25,6 +25,11 @@ Un job **`deploy`** en `.github/workflows/ci.yml`:
 
 En GitHub solo se guardan tres **variables** (no secretos): los IDs de cliente, tenant y suscripción.
 
+> **Formato del *subject*.** GitHub firma el token con el formato que incluye los **IDs inmutables** del dueño y del
+> repositorio: `repo:<owner>@<owner-id>/<repo>@<repo-id>:ref:refs/heads/main`. La credencial federada debe tener ese
+> valor exacto (con el formato antiguo, sin IDs, Azure responde `AADSTS700213`). Es más seguro: si alguien borra y
+> recrea un repositorio con el mismo nombre, los IDs ya no coinciden y Azure rechaza el token.
+
 `infra/azure/deploy.sh` sigue existiendo para **crear** la infraestructura desde cero (Key Vault, PostgreSQL, entorno,
 identidades). El día a día lo hace el CI.
 
