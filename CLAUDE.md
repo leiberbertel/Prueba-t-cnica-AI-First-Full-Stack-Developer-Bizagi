@@ -30,6 +30,8 @@ docs/             Arquitectura (C4), AI_LOG, material de presentación
   - `web/` → controllers y DTOs.
   Los subpaquetes son internos para Spring Modulith: otros módulos solo usan el paquete raíz. `ModularityTests` debe pasar.
 - Módulos se comunican por **eventos de dominio** (p. ej. `MatchResultRegistered`), no por llamadas a internos.
+- Acceso a datos (ADR-0008): JPA para escribir entidades; SQL nativo (`JdbcClient`) solo para lecturas agregadas y
+  operaciones masivas. **El SQL vive únicamente en `infrastructure`**, siempre con parámetros con nombre (`:id`).
 - DTOs como `record`. Validación con Jakarta Validation en el borde (controllers).
 - Errores: lanzar excepciones de dominio de `shared.error`; `GlobalExceptionHandler` las traduce a RFC 9457.
 - Tiempo: inyectar `java.time.Clock`; nunca `Instant.now()` directo (testeable).

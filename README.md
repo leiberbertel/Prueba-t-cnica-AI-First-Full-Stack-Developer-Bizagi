@@ -156,6 +156,7 @@ Cada decisión relevante está registrada como ADR:
 | [0005](specs/adr/0005-contract-first.md) | Contract-first con OpenAPI y cliente Angular generado |
 | [0006](specs/adr/0006-gestion-de-secretos.md) | Secretos en Azure Key Vault + Managed Identity |
 | [0007](specs/adr/0007-eliminacion-asincrona-de-cuentas.md) | Eliminación de cuentas asíncrona, por lotes y con timeouts |
+| [0008](specs/adr/0008-acceso-a-datos.md) | JPA para escribir, SQL nativo para lecturas agregadas y purgas (CQRS liviano) |
 
 Esquema de base de datos: [`specs/database.md`](specs/database.md) (migraciones en
 `backend/src/main/resources/db/migration`).
