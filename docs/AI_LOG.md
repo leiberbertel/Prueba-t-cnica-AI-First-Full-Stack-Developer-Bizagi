@@ -106,6 +106,37 @@ construye el borde. Resultado: `429` en ambos entornos, más HSTS.
 
 ---
 
+## Prompt 4 · Despliegue continuo sin contraseñas
+
+**Contexto:** desplegaba a mano con `deploy.sh` desde mi equipo. Producción podía quedar desalineada con `main`, o
+recibir código que no pasó el CI.
+
+```text
+Implementemos un despliegue automático al mezclar los cambios exitosamente con la rama main
+por medio de GitHub Action, usando como autenticación OIDC
+```
+
+**Qué aportó la IA:** el diseño concreto sobre mi pedido:
+
+- Una **identidad administrada** dedicada al despliegue, con una credencial federada que solo confía en `main`.
+- Imágenes etiquetadas con el commit, para trazabilidad exacta.
+- `concurrency` para evitar dos despliegues a la vez.
+- Un *smoke test* que hace fallar el job si la API no responde.
+
+**Mi criterio:** OIDC y no el secreto de un *service principal*, por el mismo principio del ADR-0006. Además, una
+identidad propia con **permisos mínimos**: puede publicar imágenes y actualizar las dos apps, pero no tiene acceso a
+PostgreSQL ni a Key Vault. Pedí ver los comandos de Azure antes de ejecutarlos.
+
+**El primer despliegue falló** al iniciar sesión en Azure con `AADSTS700213`. El error mostró que GitHub firma el token
+con los **IDs inmutables** del dueño y del repo (`repo:owner@id/repo@id:...`), y la credencial esperaba el formato sin
+IDs. Corregí la credencial y lo documenté en el [ADR-0009](../specs/adr/0009-despliegue-continuo.md). El formato nuevo
+además es más seguro: un repo borrado y recreado con el mismo nombre ya no coincide.
+
+**Evidencia:** la segunda ejecución quedó en verde (pruebas, build, despliegue y *smoke test*), y producción corre la
+imagen `954bdac`, el commit exacto.
+
+---
+
 ## Bloqueo resuelto con IA · Azure rechazaba las referencias a Key Vault
 
 **Contexto:** decidí que los secretos vivieran solo en **Azure Key Vault** y que los Container Apps los leyeran por
@@ -171,7 +202,8 @@ la cancha dibujada con CSS. Sin cambios en la CSP (mismo origen).
 
 - **Alcance y reglas de negocio:** RN-09 (el admin no participa), RN-10 (el admin no se puede eliminar), visibilidad de
   predicciones ajenas, desempates.
-- **Seguridad:** dónde vive cada token (ADR-0004), secretos solo en Key Vault (ADR-0006), la auditoría de producción.
+- **Seguridad:** dónde vive cada token (ADR-0004), secretos solo en Key Vault (ADR-0006), la auditoría de producción,
+  despliegue con OIDC y mínimo privilegio (ADR-0009).
 - **Escalabilidad:** exigir borrado por lotes con timeouts (ADR-0007).
 - **Plataforma:** mantener Azure ante los bloqueos en vez de migrar de proveedor.
 - **Criterio de terminado:** nada se dio por hecho sin evidencia. Backend (52 pruebas), frontend (26), CI en verde,
