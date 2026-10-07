@@ -1,4 +1,5 @@
-# ⚽ Polla Mundialista
+# ⚽ Polla Mundialista 
+[![CI](https://github.com/leiberbertel/Prueba-t-cnica-AI-First-Full-Stack-Developer-Bizagi/actions/workflows/ci.yml/badge.svg)](https://github.com/leiberbertel/Prueba-t-cnica-AI-First-Full-Stack-Developer-Bizagi/actions/workflows/ci.yml)
 
 Aplicación fullstack para que un grupo privado prediga los marcadores de la fase de grupos, sume puntos y compita en
 un ranking. El administrador carga los resultados reales y los puntos se recalculan solos.
