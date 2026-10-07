@@ -35,7 +35,7 @@ fi
 WORK="$(mktemp -d)"
 chmod 700 "$WORK"
 cleanup() {
-  az postgres flexible-server firewall-rule delete -g "$RG" -n "$PG_SERVER" --rule-name "$RULE" --yes -o none \
+  az postgres flexible-server firewall-rule delete -g "$RG" -s "$PG_SERVER" -n "$RULE" --yes -o none \
     2>/dev/null && echo "Firewall cerrado ($RULE)."
   rm -rf "$WORK"
 }
@@ -44,7 +44,7 @@ trap cleanup EXIT
 # ── Acceso temporal ─────────────────────────────────────────────────────────────────────────────
 MY_IP="$(curl -s https://api.ipify.org)"
 log "Abriendo el firewall solo para $MY_IP"
-az postgres flexible-server firewall-rule create -g "$RG" -n "$PG_SERVER" --rule-name "$RULE" \
+az postgres flexible-server firewall-rule create -g "$RG" -s "$PG_SERVER" -n "$RULE" \
   --start-ip-address "$MY_IP" --end-ip-address "$MY_IP" -o none
 
 PG_HOST="$(az postgres flexible-server show -g "$RG" -n "$PG_SERVER" --query fullyQualifiedDomainName -o tsv)"
