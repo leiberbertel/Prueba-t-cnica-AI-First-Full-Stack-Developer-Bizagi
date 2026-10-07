@@ -55,6 +55,13 @@
   align-items: center;
   gap: 12px;
   font-size: 1.05rem;
+
+  // Bandera arriba y nombre debajo: el nombre usa todo el ancho de su columna y no se corta junto al marcador.
+  app-team {
+    flex-direction: column;
+    gap: 6px;
+    text-align: center;
+  }
 }
 
 .vs {
