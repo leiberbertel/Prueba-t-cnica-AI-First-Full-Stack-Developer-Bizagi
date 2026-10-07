@@ -49,3 +49,56 @@ jobs:
       - uses: actions/checkout@v4
       - run: docker build -f backend/Dockerfile -t polla-api .
       - run: docker build -t polla-web frontend
+
+  # Despliegue continuo: solo en push a main y solo si todo lo anterior pasó.
+  # Azure confía en GitHub por OIDC (credencial federada): no hay contraseñas guardadas en el repo.
+  deploy:
+    name: Deploy · Azure Container Apps
+    runs-on: ubuntu-latest
+    needs: [docker]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    permissions:
+      id-token: write # pedir el token OIDC a GitHub
+      contents: read
+    env:
+      RESOURCE_GROUP: rg-polla-mundialista
+      REGISTRY: pollaacrh71igv
+      PUBLIC_URL: https://polla-web.kindhill-24f34a52.mexicocentral.azurecontainerapps.io
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login en Azure (OIDC, sin secretos)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build y push de imágenes
+        run: |
+          TAG="${GITHUB_SHA::7}"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          az acr login --name "$REGISTRY"
+          docker build -f backend/Dockerfile -t "$REGISTRY.azurecr.io/polla-api:$TAG" .
+          docker build -t "$REGISTRY.azurecr.io/polla-web:$TAG" frontend
+          docker push "$REGISTRY.azurecr.io/polla-api:$TAG"
+          docker push "$REGISTRY.azurecr.io/polla-web:$TAG"
+
+      - name: Actualizar las apps
+        run: |
+          az config set extension.use_dynamic_install=yes_without_prompt
+          az containerapp update -n polla-api -g "$RESOURCE_GROUP" --image "$REGISTRY.azurecr.io/polla-api:$TAG" -o none
+          az containerapp update -n polla-web -g "$RESOURCE_GROUP" --image "$REGISTRY.azurecr.io/polla-web:$TAG" -o none
+
+      - name: Smoke test
+        run: |
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$PUBLIC_URL/api/v1/auth/refresh")
+            [ "$code" = "204" ] && echo "API arriba (refresh sin cookie → 204)" && exit 0
+            sleep 10
+          done
+          echo "::error::La API no respondió 204 tras el despliegue (último código: $code)"
+          exit 1

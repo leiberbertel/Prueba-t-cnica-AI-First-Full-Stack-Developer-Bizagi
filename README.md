@@ -24,6 +24,7 @@ Angular 21 (zoneless, signals) · Angular Material 3 · Docker · GitHub Actions
 - [Decisiones técnicas](#decisiones-técnicas)
 - [Seguridad](#seguridad)
 - [Calidad y pruebas](#calidad-y-pruebas)
+- [CI/CD](#cicd)
 - [Estructura del repositorio](#estructura-del-repositorio)
 
 ---
@@ -157,6 +158,7 @@ Cada decisión relevante está registrada como ADR:
 | [0006](specs/adr/0006-gestion-de-secretos.md) | Secretos en Azure Key Vault + Managed Identity |
 | [0007](specs/adr/0007-eliminacion-asincrona-de-cuentas.md) | Eliminación de cuentas asíncrona, por lotes y con timeouts |
 | [0008](specs/adr/0008-acceso-a-datos.md) | JPA para escribir, SQL nativo para lecturas agregadas y purgas (CQRS liviano) |
+| [0009](specs/adr/0009-despliegue-continuo.md) | Despliegue continuo con GitHub Actions y OIDC (sin contraseñas) |
 
 Esquema de base de datos: [`specs/database.md`](specs/database.md) (migraciones en
 `backend/src/main/resources/db/migration`).
@@ -196,7 +198,22 @@ cd frontend && npm test            # 22 pruebas (Vitest)
 | Contrato | `ApiContractTest`: endpoints del backend = `openapi.yaml`. En CI: el cliente Angular generado = `openapi.yaml` |
 | Frontend | Interceptor (refresh único compartido), tarjeta de partido, utilidades |
 
-CI en GitHub Actions: backend, frontend y build de imágenes Docker en cada push.
+## CI/CD
+
+```
+push a main ─► backend (52 pruebas) ─┐
+               frontend (26 pruebas) ─┴─► build Docker ─► deploy a Azure ─► smoke test
+pull request ─► las mismas pruebas, sin despliegue
+```
+
+- **Despliegue continuo** ([ADR-0009](specs/adr/0009-despliegue-continuo.md)): cada push a `main` que pasa las pruebas
+  se publica solo en Azure Container Apps. La imagen se etiqueta con el commit, así que lo que corre en producción es
+  un commit exacto.
+- **Sin contraseñas:** GitHub se autentica en Azure por OIDC (credencial federada que solo confía en `main` de este
+  repositorio). La identidad solo puede subir imágenes y actualizar las dos apps; no tiene acceso a la base de datos ni
+  al Key Vault.
+- **Infraestructura desde cero:** `infra/azure/deploy.sh` crea Key Vault, PostgreSQL, el entorno y las identidades.
+- **Restablecer la demo:** `infra/azure/reset-demo-data.sh`.
 
 ## Estructura del repositorio
 
