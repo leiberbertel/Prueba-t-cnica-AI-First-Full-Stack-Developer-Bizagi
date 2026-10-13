@@ -52,11 +52,13 @@ jobs:
 
   # Despliegue continuo: solo en push a main y solo si todo lo anterior pasó.
   # Azure confía en GitHub por OIDC (credencial federada): no hay contraseñas guardadas en el repo.
+  # DESACTIVADO: la infraestructura de Azure se eliminó al terminar la prueba. Para reactivarlo, recrearla con
+  # infra/azure/deploy.sh (y la credencial federada, ADR-0009) y quitar el "false &&" de la condición.
   deploy:
     name: Deploy · Azure Container Apps
     runs-on: ubuntu-latest
     needs: [docker]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: false && github.event_name == 'push' && github.ref == 'refs/heads/main'
     concurrency:
       group: deploy-production
       cancel-in-progress: false
